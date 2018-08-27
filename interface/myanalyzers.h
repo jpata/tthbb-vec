@@ -18,7 +18,7 @@ public:
     std::shared_ptr<TH1D> h_sumpt;
     SumPtAnalyzer(Output& _output);
 
-    virtual void analyze(const Event& event);
+    virtual void analyze(Event& event);
 };
 
 
@@ -31,7 +31,7 @@ public:
     std::shared_ptr<TH1D> h_nPVs;
     EventVarsAnalyzer(Output& _output);
 
-    virtual void analyze(const Event& event);
+    virtual void analyze(Event& event);
 };
 
 //Here we compute as an example the deltaR between all jet pairs
@@ -42,7 +42,7 @@ public:
     std::shared_ptr<TH1D> h_deltaR;
     JetDeltaRAnalyzer(Output& _output);
 
-    virtual void analyze(const Event& event);
+    virtual void analyze(Event& event);
 };
 
 #endif

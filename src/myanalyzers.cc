@@ -11,7 +11,7 @@ SumPtAnalyzer::SumPtAnalyzer(Output& _output) : output(_output) {
     h_sumpt = output.histograms_1d.at(string_hash("h_sumpt"));
 }
 
-void SumPtAnalyzer::analyze(const Event& event) {
+void SumPtAnalyzer::analyze(Event& event) {
     double sum_pt = 0.0;
 
     for (auto jet : event.jets) {
@@ -37,7 +37,7 @@ EventVarsAnalyzer::EventVarsAnalyzer(Output& _output) : output(_output) {
     h_nPVs = output.histograms_1d.at(string_hash("h_nPVs"));
 }
 
-void EventVarsAnalyzer::analyze(const Event& event) {
+void EventVarsAnalyzer::analyze(Event& event) {
     h_nPVs->Fill(event.lc_int.get(string_hash("PV_npvsGood")));
 }
 
@@ -68,7 +68,7 @@ public:
     }
 };
 
-void JetDeltaRAnalyzer::analyze(const Event& event) {
+void JetDeltaRAnalyzer::analyze(Event& event) {
     const auto njets = event.jets.size();
 
     //we would like to store a list of all the jet pairs along with their delta R
@@ -81,6 +81,7 @@ void JetDeltaRAnalyzer::analyze(const Event& event) {
         jet_lvs.push_back(make_lv(jet.pt(), jet.eta(), jet.phi(), jet.mass()));
     }
 
+    //Loop over jet pairs
     for (unsigned int i = 0; i < njets; i++) {
         for (unsigned int j = i + 1; j < njets; j++) {
             const auto& lv1 = jet_lvs.at(i);

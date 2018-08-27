@@ -17,6 +17,8 @@ using json = nlohmann::json;
 
 //This is our basic Event representation
 //We always construct vectors of basic physics objects such as jets and leptons
+//On the other hand, since this is done for every event, we want to keep it as
+//minimal as possible.
 class Event : public NanoEvent {
 public:
 
@@ -31,6 +33,7 @@ public:
     //event and we don't keep any information from previous events
     void clear_event();
 
+    //In this function we create our event representation
     void analyze();
 
 };
@@ -39,22 +42,22 @@ public:
 //An Analyzer receives a read-only event and processes it in some simple way
 class Analyzer {
 public:
-    virtual void analyze(const Event& event) = 0;
+    virtual void analyze(Event& event) = 0;
 };
 
 //A class that creates the output file and contains all the other
 //output objects: histograms, TTrees etc
 class Output {
 public:
-    std::unique_ptr<TFile> outfile;
+    unique_ptr<TFile> outfile;
 
     //A map of "histo_nickname" -> TH1D
     //However, for reasons of speed, we use a compile-time hash of the string
     //therefore, we only ever refer to the histogram by its hash, which is a number
-    unordered_map<unsigned int, std::shared_ptr<TH1D>> histograms_1d;
+    unordered_map<unsigned int, shared_ptr<TH1D>> histograms_1d;
 
     //Creates the output TFile
-    Output(const std::string& outfn);
+    Output(const string& outfn);
 
     //makes sure the TFile is properly written and closed
     ~Output();
@@ -68,7 +71,7 @@ public:
     vector<string> input_files;
     string output_filename;
 
-    Configuration(const std::string& json_file);
+    Configuration(const string& json_file);
 };
 
 
@@ -77,12 +80,16 @@ public:
     //Keeps track of the total duration (in nanoseconds) spent on constructing
     //the event representation from the ROOT file 
     unsigned long long event_duration;
+
+    //total number of events processed
     unsigned long long num_events_processed;
 
+    //Event loop timing information
     double cpu_time;
     double real_time;
     double speed;
 
+    //input filename
     string filename;
 
     //Keeps track of the total duration (in nanoseconds) spent on each analyzer
@@ -109,6 +116,6 @@ FileReport looper_main(
 //
 
 //Prints the system time as HH::mm::ss
-std::_Put_time<char> get_time();
+string get_time();
 
 #endif

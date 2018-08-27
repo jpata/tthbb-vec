@@ -29,7 +29,7 @@ void Event::analyze() {
         jets.push_back(jet);
     }
 
-    //Construct euons
+    //Construct muons
     const auto nMuon = this->lc_uint.get(string_hash("nMuon"));
     for (unsigned int _nMuon = 0; _nMuon < nMuon; _nMuon++) {
         Muon muon(*this, _nMuon);
@@ -120,12 +120,14 @@ FileReport looper_main(
     return report;
 }
 
-std::_Put_time<char> get_time() {
-    using std::chrono::system_clock;
-    std::time_t tt = system_clock::to_time_t (system_clock::now());
+std::string get_time()
+{
+    auto now = std::chrono::system_clock::now();
+    auto in_time_t = std::chrono::system_clock::to_time_t(now);
 
-    struct std::tm * ptm = std::localtime(&tt);
-    return std::put_time(ptm,"%X");
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%X");
+    return ss.str();
 }
 
 Configuration::Configuration(const std::string& json_file) {
@@ -154,6 +156,7 @@ FileReport::FileReport(const std::string& _filename, const vector<std::shared_pt
     }
 }
 
+//Convert the report from processing one file to json
 void to_json(json& j, const FileReport& p) {
     j = json{
         {"filename", p.filename},

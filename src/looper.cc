@@ -18,8 +18,8 @@ int main( int argc, char *argv[]) {
     cout << get_time() << " looper main() started" << endl;
     gROOT->SetBatch(true); 
     
-    if(argc!=2) {
-        cerr << "Usage: ./looper input.json" << endl;
+    if(argc!=3) {
+        cerr << "Usage: ./looper input.json output.json" << endl;
         return 0;
     }
 
@@ -39,6 +39,7 @@ int main( int argc, char *argv[]) {
         std::make_shared<JetDeltaRAnalyzer>(output)
     };
     
+    //Process all the input files
     json total_report;
     //Loop over all the input files
     for (const auto& input_file : conf.input_files) {
@@ -50,7 +51,10 @@ int main( int argc, char *argv[]) {
         tf->Close();
     }
     cout << get_time() << " looper main() done on json file " << argv[1] << endl;
-    cout << total_report.dump(4) << endl;
+
+    //Write the output metadata json
+    std::ofstream out_json(argv[2]);
+    out_json << total_report.dump(4);
 
     return 0;
 }
