@@ -28,7 +28,7 @@ class Dataset:
         return os.path.join("data", "das_cache", self.process, self.escape_name() + ".txt")
     
     def job_filename(self, njob):
-        return os.path.join("data", "jobs", self.process, self.escape_name(), "job_{0}".format(njob))
+        return os.path.join("data", "jobs", self.process, self.escape_name(), "job_{0}.json".format(njob))
 
     def cache_files(self):
         LOG_MODULE_NAME.info("caching dataset {0}".format(self.name))
@@ -66,7 +66,6 @@ class Dataset:
        
         ijob = 0
         for files_chunk in chunks(files, files_per_job):
-            print files_chunk
             with open(self.job_filename(ijob), "w") as fi:
                 job_json = {
                     "input_filenames": files_chunk,
@@ -110,4 +109,7 @@ if __name__ == "__main__":
     
     analysis = Analysis.from_yaml("data/analysis.yaml")
    
-    analysis.mc_datasets[0].create_jobfiles(2) 
+    for ds in analysis.mc_datasets:
+        ds.create_jobfiles(2)
+    for ds in analysis.data_datasets:
+        ds.create_jobfiles(2) 

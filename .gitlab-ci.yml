@@ -52,4 +52,4 @@ run-looper:
       - cd $CI_HOME/../$CMSSW_VERSION/src
       - eval `scramv1 runtime -sh`
       - cd nanoflow
-      - ./looper data/input_xrootd.json
+      - ./looper data/input_xrootd.json out.json
