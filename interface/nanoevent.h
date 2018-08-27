@@ -8,6 +8,7 @@
 #include <TTreeReaderValue.h>
 #include <TTreeReaderArray.h>
 #include <TTreeReaderArray.h>
+#include <TLeaf.h>
 
 using namespace std;
 
@@ -45,7 +46,7 @@ public:
 
     //Gets the value stored in a specific array at a specific index
     T get(const unsigned int& id_hash, unsigned int idx) const {
-        const TTreeReaderArray<T>& val = *reader_cache.at(id_hash);
+        TTreeReaderArray<T>& val = *reader_cache.at(id_hash);
         return val[idx];
     }
 };

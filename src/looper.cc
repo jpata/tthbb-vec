@@ -42,11 +42,12 @@ int main( int argc, char *argv[]) {
     json total_report;
     //Loop over all the input files
     for (const auto& input_file : conf.input_files) {
-        TFile tf(input_file.c_str());
-        TTreeReader reader("Events", &tf);
+        TFile* tf = TFile::Open(input_file.c_str());
+        TTreeReader reader("Events", tf);
 
         auto report = looper_main(input_file, reader, output, analyzers);
         total_report.push_back(report);
+        tf->Close();
     }
     cout << get_time() << " looper main() done on json file " << argv[1] << endl;
     cout << total_report.dump(4) << endl;

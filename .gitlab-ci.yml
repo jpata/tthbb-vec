@@ -1,0 +1,55 @@
+stages:
+    - build
+    - test
+
+before_script:
+  - source /cvmfs/grid.cern.ch/etc/profile.d/setup-cvmfs-ui.sh
+  - source /cvmfs/cms.cern.ch/cmsset_default.sh
+  - export CI_HOME="$( pwd )"
+  - mkdir -p ~/.ssh
+  - echo -e "Host *\n\tGSSAPIDelegateCredentials yes\n\tGSSAPITrustDNS yes\n\n" > ~/.ssh/config
+  - echo "${KRB_PASSWORD}" | kinit -f ${KRB_USERNAME}@CERN.CH
+  - klist
+  - scp -v -o StrictHostKeyChecking=no ${KRB_USERNAME}@lxplus.cern.ch:~/x509 ~/x509
+  - export X509_USER_PROXY=~/x509
+  - voms-proxy-info --all
+  - git config --global user.name 'CERN CI'
+  - git config --global user.email 'joosep.pata@cern.ch'
+  - git config --global user.github jpata
+  - export CMSSW_GIT_REFERENCE="/cvmfs/cms.cern.ch/cmssw.git.daily"
+  - export SCRAM_ARCH="slc6_amd64_gcc630"
+  - export CMSSW_VERSION="CMSSW_9_4_9"
+  - export CMS_PATH=/cvmfs/cms-ib.cern.ch/week0
+
+build-looper:
+    tags: [ cvmfs ]
+    stage: build
+    script:
+      - cd $CI_HOME/..
+      - scramv1 project CMSSW $CMSSW_VERSION
+      - ls -al
+      - cd $CMSSW_VERSION/src
+      - eval `scramv1 runtime -sh`
+      - cp -r $CI_HOME ./
+      - cd nanoflow
+      - make looper
+      - cd $CMSSW_BASE/..
+      - tar -czf cmssw.tgz $CMSSW_VERSION
+      - du -csh cmssw.tgz
+      - mv $CI_HOME/../cmssw.tgz $CI_HOME
+    artifacts:
+        paths:
+            - cmssw.tgz
+
+run-looper:
+    tags: [ cvmfs ]
+    stage: test
+    script:
+      - export CI_HOME="$( pwd )"
+      - cd $CI_HOME/..
+      - tar xfz $CI_HOME/cmssw.tgz
+      - ls -al
+      - cd $CI_HOME/../$CMSSW_VERSION/src
+      - eval `scramv1 runtime -sh`
+      - cd nanoflow
+      - ./looper data/input_xrootd.json

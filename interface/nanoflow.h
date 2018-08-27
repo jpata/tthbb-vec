@@ -3,6 +3,7 @@
 #define NANOFLOW_H
 
 #include <chrono>
+#include <iomanip>
 
 #include <TFile.h>
 #include <TH1D.h>
@@ -108,6 +109,6 @@ FileReport looper_main(
 //
 
 //Prints the system time as HH::mm::ss
-__iom_t10<char> get_time();
+std::_Put_time<char> get_time();
 
 #endif

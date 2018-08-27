@@ -95,6 +95,13 @@ FileReport looper_main(
 
             iAnalyzer += 1;
         }
+
+        //Print out a progress report
+        if (nevents > 0  && nevents % 50000 == 0) {
+            const auto elapsed_time = sw.RealTime();
+            cout << "Processed " << nevents << "/" << reader.GetEntries(true) << " speed=" << nevents/elapsed_time/1000.0 << "kHz" << endl;
+            sw.Continue();
+        }
         nevents += 1;
     }
     report.num_events_processed = nevents;
@@ -113,7 +120,7 @@ FileReport looper_main(
     return report;
 }
 
-__iom_t10<char> get_time() {
+std::_Put_time<char> get_time() {
     using std::chrono::system_clock;
     std::time_t tt = system_clock::to_time_t (system_clock::now());
 
