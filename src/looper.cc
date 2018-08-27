@@ -44,6 +44,10 @@ int main( int argc, char *argv[]) {
     //Loop over all the input files
     for (const auto& input_file : conf.input_files) {
         TFile* tf = TFile::Open(input_file.c_str());
+        if (tf == nullptr) {
+            cerr << "Could not open file " << input_file << ", exiting" << endl;
+            return 1;
+        }
         TTreeReader reader("Events", tf);
 
         auto report = looper_main(input_file, reader, output, analyzers);
