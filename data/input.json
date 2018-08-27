@@ -1,8 +1,6 @@
 {
     "input_filenames": [
-        "/Users/joosep/Documents/nano/ttjets_sl/0E0B09D0-6A59-E811-9F00-008CFAFBF576.root",
-        "/Users/joosep/Documents/nano/ttjets_sl/2214121A-7359-E811-B369-008CFAF3543C.root",
-        "/Users/joosep/Documents/nano/ttjets_sl/46779796-E459-E811-BF3D-3417EBE64696.root"
+        "file:///eos/user/j/jpata/nano/ttjets_sl/0E0B09D0-6A59-E811-9F00-008CFAFBF576.root"
     ],
     "output_filename": "out.root"
 }
