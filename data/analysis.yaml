@@ -1,5 +1,6 @@
 
 datasets:
+  global_file_prefix: root://cms-xrd-global.cern.ch/
   data:
     SingleMuon:
       - name: /SingleMuon/Run2017F-31Mar2018-v1/NANOAOD

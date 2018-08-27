@@ -1,11 +1,21 @@
 import yaml
 import subprocess
 import os
+import logging
+import json
+
+LOG_MODULE_NAME = logging.getLogger(__name__)
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 class Dataset:
-    def __init__(self, name, process):
+    def __init__(self, name, process, file_prefix):
         self.name = name
         self.process = process
+        self.file_prefix = file_prefix
 
     def __repr__(self):
         s = "Dataset(name={0})".format(self.name)
@@ -15,26 +25,55 @@ class Dataset:
         return self.name.replace("/", "__")
 
     def cache_filename(self):
-        return os.path.join("data", self.process, self.escape_name() + ".txt")
+        return os.path.join("data", "das_cache", self.process, self.escape_name() + ".txt")
+    
+    def job_filename(self, njob):
+        return os.path.join("data", "jobs", self.process, self.escape_name(), "job_{0}".format(njob))
 
     def cache_files(self):
-        ret = subprocess.check_output('echo dasgoclient --query="file dataset={0}" --limit=0'.format(self.name), shell=True)
+        LOG_MODULE_NAME.info("caching dataset {0}".format(self.name))
+        ret = subprocess.check_output('dasgoclient --query="file dataset={0}" --limit=0'.format(self.name), shell=True)
 
         target_dir = os.path.dirname(self.cache_filename())
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
-
+        
+        nfiles = 0
         with open(self.cache_filename(), "w") as fi:
             for line in ret.split("\n"):
                 if line.endswith(".root"):
-                    fi.write(line)
+                    fi.write(line + "\n")
+                    nfiles += 1
+        
+        LOG_MODULE_NAME.info("retrieved {0} files from DAS".format(nfiles))
 
         return
 
     def get_files(self):
-        lines = open(self.cache_filename(), "r").readlines()
+        lines = [li.strip() for li in open(self.cache_filename(), "r").readlines()]
         return lines
 
+    def lfn_to_pfn(self, fn):
+        return self.file_prefix + fn
+
+    def create_jobfiles(self, files_per_job):
+        files = self.get_files()
+        files = map(self.lfn_to_pfn, files)
+        
+        target_dir = os.path.dirname(self.job_filename(0))
+        if not os.path.exists(target_dir):
+            os.makedirs(target_dir)
+       
+        ijob = 0
+        for files_chunk in chunks(files, files_per_job):
+            print files_chunk
+            with open(self.job_filename(ijob), "w") as fi:
+                job_json = {
+                    "input_filenames": files_chunk,
+                    "output_filename": "out.root",
+                }
+                fi.write(json.dumps(job_json, indent=2))
+            ijob += 1
 
 class Analysis:
     def __init__(self, mc_datasets, data_datasets):
@@ -46,19 +85,29 @@ class Analysis:
         with open(yaml_path, 'r') as stream:
             data_loaded = yaml.load(stream)
 
+            global_file_prefix = data_loaded["datasets"]["global_file_prefix"]
+
             mc_datasets = []
             for process_name in data_loaded["datasets"]["simulation"]:
                 for ds in data_loaded["datasets"]["simulation"][process_name]:
-                    mc_datasets.append(Dataset(ds["name"], process_name))
+                    mc_datasets.append(Dataset(ds["name"], process_name, global_file_prefix))
             
             data_datasets = []
-            for process_name in data_loaded["datasets"]["simulation"]:
-                for ds in data_loaded["datasets"]["simulation"][process_name]:
-                    data_datasets.append(Dataset(ds["name"], process_name))
+            for process_name in data_loaded["datasets"]["data"]:
+                for ds in data_loaded["datasets"]["data"][process_name]:
+                    data_datasets.append(Dataset(ds["name"], process_name, global_file_prefix))
 
             return Analysis(mc_datasets, data_datasets)
+   
+    def cache_filenames(self):
+        for dataset in self.mc_datasets:
+            dataset.cache_files()
+        for dataset in self.data_datasets:
+            dataset.cache_files()
 
-
-analysis = Analysis.from_yaml("data/analysis.yaml")
-analysis.mc_datasets[0].cache_files()
-print analysis.mc_datasets[0].get_files()
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    
+    analysis = Analysis.from_yaml("data/analysis.yaml")
+   
+    analysis.mc_datasets[0].create_jobfiles(2) 
