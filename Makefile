@@ -1,4 +1,4 @@
-OPTS=-Wno-unsequenced -O3 -std=c++14
+OPTS=-Wno-unsequenced -g -std=c++14
 CFLAGS=`root-config --cflags` ${OPTS} -I./interface/
 LIBS=-lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -pthread -lm -ldl -rdynamic
 #-lEve -lEG -lGeom -lGed -lCore
@@ -20,5 +20,8 @@ bin/looper.o: src/looper.cc
 
 looper: bin/nanoflow.o bin/looper.o bin/myanalyzers.o
 	c++ ${LDFLAGS} bin/nanoflow.o bin/looper.o bin/myanalyzers.o -o looper
+
+simple_loop: src/simple_loop.cc
+	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o simple_loop
 
 .PHONY: clean

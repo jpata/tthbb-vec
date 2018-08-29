@@ -66,8 +66,8 @@ FileReport looper_main(
     FileReport report(filename, analyzers);
 
     //This is the main event loop
+    cout << "starting loop over " << reader.GetEntries(true) << " events in TTree " << reader.GetTree() << endl;
     while (reader.Next()) {
-
         auto time_t0 = std::chrono::high_resolution_clock::now();
 
         //We create the event from the NanoAOD data
@@ -97,7 +97,7 @@ FileReport looper_main(
         }
 
         //Print out a progress report
-        if (nevents > 0  && nevents % 50000 == 0) {
+        if (nevents % 50000 == 0) {
             const auto elapsed_time = sw.RealTime();
             cout << "Processed " << nevents << "/" << reader.GetEntries(true) << " speed=" << nevents/elapsed_time/1000.0 << "kHz" << endl;
             sw.Continue();
