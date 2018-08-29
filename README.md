@@ -1,6 +1,27 @@
 # nanoflow analysis tool
 
-The nanoflow analysis tool is an example of how to access data from NanoAOD in a lazy
+A very simple example on how to access data from NanoAOD is in `src/simple_loop.cc`.
+You can compile and run it using
+
+~~~
+make simple_loop
+./simple_loop input.root
+~~~
+
+In this simple example, we need to predefine the event structure in case we want to access it:
+
+~~~
+    TTreeReaderValue<unsigned int> nJet(reader, "nJet");
+    TTreeReaderArray<float> Jet_pt(reader, "Jet_pt");
+    TTreeReaderArray<float> Jet_eta(reader, "Jet_eta");
+    TTreeReaderArray<float> Jet_phi(reader, "Jet_phi");
+    TTreeReaderArray<float> Jet_mass(reader, "Jet_mass");
+~~~
+For complex events, it can get tedious to maintain this structure by hand. On the other hand, in PyROOT,
+you can access the branches simply using `tree.branch_name`, but this results in slow
+analysis code.
+
+The nanoflow analysis tool is an example of how to access NanoAOD data from C++ in a lazy
 way without having to predefine the full event structure.
 
 
