@@ -1,7 +1,28 @@
 
 datasets:
+
+  #The ROOT TFile prefix that allows us to access the files
 #  global_file_prefix: root://cms-xrd-global.cern.ch/
   global_file_prefix: file:///mnt/hadoop/
+
+  #All the simulation datasets are gathered here
+  simulation:
+    #we group together datasets that represent the same physics process and should be added together in the analysis, for example semileptonic tt+jets is ttjets_sl
+    ttjets_sl:
+
+      #each dataset has a DAS name and a cross section
+      - name: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/NANOAODSIM
+        xs: 123.4 #this is just a dummy value
+
+      - name: /TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM 
+
+    ttjets_dl:
+      - name: /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
+      - name: /TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
+
+    ttjets_had:
+      - name: /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
+  
   data:
     SingleMuon:
       - name: /SingleMuon/Run2017F-31Mar2018-v1/NANOAOD
@@ -9,19 +30,10 @@ datasets:
       - name: /SingleMuon/Run2017D-31Mar2018-v1/NANOAOD
       - name: /SingleMuon/Run2017C-31Mar2018-v1/NANOAOD
       - name: /SingleMuon/Run2017B-31Mar2018-v1/NANOAOD
+
     SingleElectron:
       - name: /SingleElectron/Run2017F-31Mar2018-v1/NANOAOD
       - name: /SingleElectron/Run2017E-31Mar2018-v1/NANOAOD
       - name: /SingleElectron/Run2017D-31Mar2018-v1/NANOAOD
       - name: /SingleElectron/Run2017C-31Mar2018-v1/NANOAOD
       - name: /SingleElectron/Run2017B-31Mar2018-v1/NANOAOD
-  simulation:
-    ttjets_sl:
-      - name: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/NANOAODSIM
-        xs: 123.4
-      - name: /TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM 
-    ttjets_dl:
-      - name: /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
-      - name: /TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
-    ttjets_had:
-      - name: /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
