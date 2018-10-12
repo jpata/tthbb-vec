@@ -13,7 +13,7 @@
 #include "nanoevent.h"
 
 using namespace std;
-using json = nlohmann::json;
+using nlohmann::json;
 
 //This is our basic Event representation
 //We always construct vectors of basic physics objects such as jets and leptons
@@ -27,6 +27,7 @@ public:
     vector<Muon> muons;
     vector<Electron> electrons;
 
+    double highest_inv_mass;
     Event(TTreeReader& _reader) : NanoEvent(_reader) {}
 
     //This is very important to make sure that we always start with a clean
@@ -43,7 +44,9 @@ public:
 class Analyzer {
 public:
     virtual void analyze(Event& event) = 0;
+    virtual const string getName() const = 0;
 };
+
 
 //A class that creates the output file and contains all the other
 //output objects: histograms, TTrees etc
@@ -55,12 +58,30 @@ public:
     //However, for reasons of speed, we use a compile-time hash of the string
     //therefore, we only ever refer to the histogram by its hash, which is a number
     unordered_map<unsigned int, shared_ptr<TH1D>> histograms_1d;
+    unordered_map<unsigned int, shared_ptr<TTree>> trees;
 
     //Creates the output TFile
     Output(const string& outfn);
 
     //makes sure the TFile is properly written and closed
-    ~Output();
+    void close();
+};
+
+
+//This is an example of how to produce TTree outputs
+class TreeAnalyzer : public Analyzer {
+public:
+    Output& output;
+
+    shared_ptr<TTree> out_tree;
+    TreeAnalyzer(Output& _output);
+   
+    unsigned int br_run;
+    unsigned int br_luminosityBlock;
+    unsigned long br_event;
+ 
+    virtual void analyze(Event& event);
+    virtual const string getName() const;
 };
 
 //This data structure contains the configuration of the event loop.
@@ -94,8 +115,12 @@ public:
 
     //Keeps track of the total duration (in nanoseconds) spent on each analyzer
     vector<unsigned long long> analyzer_durations;
+    
+    vector<string> analyzer_names;
 
-    FileReport(const string& filename, const vector<shared_ptr<Analyzer>>& analyzers);
+    FileReport(const string& filename, const vector<Analyzer*>& analyzers);
+
+    void print(std::ostream& stream);
 };
 
 void to_json(json& j, const FileReport& p);
@@ -109,7 +134,8 @@ FileReport looper_main(
     const string& filename,
     TTreeReader& reader,
     Output& output,
-    const vector<shared_ptr<Analyzer>>& analyzers);
+    const vector<Analyzer*>& analyzers,
+    long long max_events = -1);
 
 //
 //Utility functions

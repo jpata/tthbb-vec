@@ -10,6 +10,8 @@
 #include <TTreeReaderArray.h>
 #include <TLeaf.h>
 
+#include <typeinfo>
+
 using namespace std;
 
 
@@ -31,7 +33,7 @@ inline unsigned int string_hash_cpp(const std::string& str)
 template <typename T>
 class LazyArrayReader {
 public:
-    unordered_map<unsigned int,  TTreeReaderArray<T>*> reader_cache;
+    unordered_map<unsigned int,  unique_ptr<TTreeReaderArray<T>>> reader_cache;
     TTreeReader& reader;
 
     LazyArrayReader(TTreeReader& _reader) : reader(_reader) {}
@@ -39,8 +41,9 @@ public:
     //Creates the TTreeReaderArray for a specific branch on the heap and stores it in the cache
     void setup(const std::string& id) {
         const auto id_hash = string_hash_cpp(id);
+        cout << "Branch: vector " << typeid(T).name() << " " << id << endl;
         if(reader_cache.find(id_hash) == reader_cache.end()) {
-            reader_cache[id_hash] = new TTreeReaderArray<T>(reader, id.c_str());
+            reader_cache[id_hash] = make_unique<TTreeReaderArray<T>>(reader, id.c_str());
         }
     }
 
@@ -55,15 +58,16 @@ public:
 template <typename T>
 class LazyValueReader {
 public:
-    unordered_map<unsigned int,  TTreeReaderValue<T>*> reader_cache;
+    unordered_map<unsigned int,  unique_ptr<TTreeReaderValue<T>>> reader_cache;
     TTreeReader& reader;
 
     LazyValueReader(TTreeReader& _reader) : reader(_reader) {}
 
     void setup(const std::string& id) {
+        cout << "Branch: " << typeid(T).name() << " " << id << endl;
         const auto id_hash = string_hash_cpp(id);
         if(reader_cache.find(id_hash) == reader_cache.end()) {
-            reader_cache[id_hash] = new TTreeReaderValue<T>(reader, id.c_str());
+            reader_cache[id_hash] = make_unique<TTreeReaderValue<T>>(reader, id.c_str());
         }
     }
 
@@ -190,6 +194,10 @@ public:
         return event.lc_vint.get(string_hash, index);
     }
 
+    virtual float pt() const = 0;
+    virtual float eta() const = 0;
+    virtual float phi() const = 0;
+    virtual float mass() const = 0;
     //Add here getters for other datatypes
 };
 

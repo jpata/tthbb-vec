@@ -23,26 +23,28 @@ int main( int argc, char *argv[]) {
         return 0;
     }
 
-    //Load the configuration from the provided input json file
-    Configuration conf(argv[1]);
-
-    cout << get_time() << " loaded json file " << argv[1] << endl;
-
-    //Create all the outputs (histograms, trees, ...)
-    Output output(conf.output_filename);
-
-    //Create all the Analyzers: later this can be done directly from the JSON
-    //These are defined in the myanalyzers.h/myanalyzers.cc files
-    vector<std::shared_ptr<Analyzer>> analyzers = {
-        std::make_shared<SumPtAnalyzer>(output),
-        std::make_shared<EventVarsAnalyzer>(output),
-        std::make_shared<JetDeltaRAnalyzer>(output)
-    };
+    cout << get_time() << " loading json file " << argv[1] << endl;
     
-    //Process all the input files
+    //Load the configuration from the provided input json file
+    std::unique_ptr<Configuration> conf = std::make_unique<Configuration>(argv[1]);
+
+    //Create the output file
+    std::unique_ptr<Output> output = std::make_unique<Output>(conf->output_filename);
+
+    //Define the sequence of analyzers you want to run
+    //These are defined in the myanalyzers.h/myanalyzers.cc files
+    vector<Analyzer*> analyzers = {
+        new SumPtAnalyzer(*output),
+        new EventVarsAnalyzer(*output),
+        //std::make_shared<JetDeltaRAnalyzer>(output),
+        new TreeAnalyzer(*output)
+    };
+   
+    //Define the final output report 
     json total_report;
+
     //Loop over all the input files
-    for (const auto& input_file : conf.input_files) {
+    for (const auto& input_file : conf->input_files) {
         TFile* tf = TFile::Open(input_file.c_str());
         if (tf == nullptr) {
             cerr << "Could not open file " << input_file << ", exiting" << endl;
@@ -50,10 +52,12 @@ int main( int argc, char *argv[]) {
         }
         TTreeReader reader("Events", tf);
 
-        auto report = looper_main(input_file, reader, output, analyzers);
+        auto report = looper_main(input_file, reader, *output, analyzers);
         total_report.push_back(report);
         tf->Close();
     }
+    output->close();
+
     cout << get_time() << " looper main() done on json file " << argv[1] << endl;
 
     //Write the output metadata json

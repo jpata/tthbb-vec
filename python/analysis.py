@@ -9,6 +9,7 @@ import os
 import logging
 import json
 import argparse
+import glob
 
 LOG_MODULE_NAME = logging.getLogger(__name__)
 
@@ -30,22 +31,26 @@ class Dataset:
     """Datatype that represents a DAS dataset
     
     Attributes:
-        file_prefix (string): The ROOT TFile prefix that allows to open an LFN (/store/...)
+        global_file_prefix (string): The ROOT TFile prefix that allows to open an LFN (/store/...)
         name (string): The DAS name of the dataset
         process (string): The nickname for the physics process that this dataset belongs to
     """
     
-    def __init__(self, name, process, file_prefix):
+    def __init__(self, name, process, global_file_prefix, cache_location, use_cache):
         """Summary
         
         Args:
             name (string): The DAS name of the dataset
             process (string): The nickname for the physics process that this dataset belongs to
-            file_prefix (string): The ROOT TFile prefix that allows to open an LFN (/store/...)
+            global_file_prefix (string): The ROOT TFile prefix that allows to open an LFN (/store/...)
+            cache_location (string): The location of the local file cache
+            use_cache (boolean): If true, access files from cache_location instead of global_file_prefix in jobs
         """
         self.name = name
         self.process = process
-        self.file_prefix = file_prefix
+        self.global_file_prefix = global_file_prefix
+        self.cache_location = cache_location
+        self.use_cache = use_cache
 
     def __repr__(self):
         """
@@ -62,7 +67,7 @@ class Dataset:
         Returns:
             string: The DAS name usable as a filename
         """
-        return self.name.replace("/", "__")
+        return self.name.replace("/", "__")[2:]
 
     def cache_filename(self):
         """Summary
@@ -125,9 +130,13 @@ class Dataset:
         Returns:
             TYPE: Description
         """
-        return self.file_prefix + fn
+        pref = self.global_file_prefix
+        if self.use_cache:
+            pref = self.cache_location
 
-    def create_jobfiles(self, files_per_job):
+        return pref + fn
+
+    def create_jobfiles(self, files_per_job, outfile=None):
         """Summary
         
         Args:
@@ -144,14 +153,23 @@ class Dataset:
         ijob = 0
         for files_chunk in chunks(files, files_per_job):
             with open(self.job_filename(ijob), "w") as fi:
+		_outfile = "out.root"
+		if not outfile:
+		    _outfile = os.path.join(target_dir, "out_{0}.root".format(ijob))
                 job_json = {
                     "input_filenames": files_chunk,
-                    "output_filename": "out.root",
+                    "output_filename": _outfile,
                 }
                 fi.write(json.dumps(job_json, indent=2))
             ijob += 1
         LOG_MODULE_NAME.info("{0} jobfiles created in {1}".format(ijob+1, target_dir))
 
+    def get_jobfiles(self):
+        target_dir = os.path.dirname(self.job_filename(0))
+        if not os.path.exists(target_dir):
+   	    raise Exception("Job files not created, call create_jobfiles() first")
+        return glob.glob(os.path.join(target_dir, "*.json"))
+ 
 class Analysis:
 
     """Summary
@@ -182,19 +200,22 @@ class Analysis:
             TYPE: Description
         """
         with open(yaml_path, 'r') as stream:
+            LOG_MODULE_NAME.info("loading analysis from {0}".format(yaml_path)) 
             data_loaded = yaml.load(stream)
 
             global_file_prefix = data_loaded["datasets"]["global_file_prefix"]
+            cache_location = data_loaded["datasets"]["cache_location"]
+            use_cache = data_loaded["datasets"]["use_cache"]
 
             mc_datasets = []
             for process_name in data_loaded["datasets"]["simulation"]:
                 for ds in data_loaded["datasets"]["simulation"][process_name]:
-                    mc_datasets.append(Dataset(ds["name"], process_name, global_file_prefix))
+                    mc_datasets.append(Dataset(ds["name"], process_name, global_file_prefix, cache_location, use_cache))
             
             data_datasets = []
             for process_name in data_loaded["datasets"]["data"]:
                 for ds in data_loaded["datasets"]["data"][process_name]:
-                    data_datasets.append(Dataset(ds["name"], process_name, global_file_prefix))
+                    data_datasets.append(Dataset(ds["name"], process_name, global_file_prefix, cache_location, use_cache))
 
             return Analysis(mc_datasets, data_datasets)
    
@@ -222,7 +243,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='The nanoflow analysis controller')
     parser.add_argument('-a','--analysis', help='The analysis yaml file',
-        required=False, default="data/analysis.yaml", action="store",
+        required=False, default="./data/analysis.yaml", action="store",
+
     )
     parser.add_argument('--cache_das', help='Caches the dataset filenames from DAS',
         action="store_true"
@@ -245,4 +267,4 @@ if __name__ == "__main__":
         analysis.cache_filenames()
 
     if args.create_jobfiles:
-        analysis.create_jobfiles(2)
+        analysis.create_jobfiles(1)
