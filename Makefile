@@ -18,11 +18,11 @@ bin/myanalyzers.o: src/myanalyzers.cc interface/myanalyzers.h
 bin/looper.o: src/looper.cc interface/myanalyzers.h
 	c++ ${CFLAGS} -c src/looper.cc -o bin/looper.o
 
-bin/looper: bin/nanoflow.o bin/looper.o bin/myanalyzers.o
-	c++ ${LDFLAGS} bin/nanoflow.o bin/looper.o bin/myanalyzers.o -o bin/looper
+bin/looper: bin/nanoflow.o bin/looper.o
+	c++ ${LDFLAGS} bin/nanoflow.o bin/looper.o -o bin/looper
 
-bin/libnanoflow.so: bin/nanoflow.o bin/myanalyzers.o
-	c++ ${CFLAGS} ${LDFLAGS} bin/nanoflow.o bin/myanalyzers.o -shared -o bin/libnanoflow.so
+bin/libnanoflow.so: bin/nanoflow.o
+	c++ ${CFLAGS} ${LDFLAGS} bin/nanoflow.o -shared -o bin/libnanoflow.so
 
 bin/simple_loop: src/simple_loop.cc
 	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
