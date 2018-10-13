@@ -41,7 +41,7 @@ public:
     //Creates the TTreeReaderArray for a specific branch on the heap and stores it in the cache
     void setup(const std::string& id) {
         const auto id_hash = string_hash_cpp(id);
-        cout << "Branch: vector " << typeid(T).name() << " " << id << endl;
+        //cout << "Branch: vector " << typeid(T).name() << " " << id << endl;
         if(reader_cache.find(id_hash) == reader_cache.end()) {
             reader_cache[id_hash] = make_unique<TTreeReaderArray<T>>(reader, id.c_str());
         }
@@ -64,7 +64,7 @@ public:
     LazyValueReader(TTreeReader& _reader) : reader(_reader) {}
 
     void setup(const std::string& id) {
-        cout << "Branch: " << typeid(T).name() << " " << id << endl;
+        //cout << "Branch: " << typeid(T).name() << " " << id << endl;
         const auto id_hash = string_hash_cpp(id);
         if(reader_cache.find(id_hash) == reader_cache.end()) {
             reader_cache[id_hash] = make_unique<TTreeReaderValue<T>>(reader, id.c_str());
@@ -149,6 +149,8 @@ public:
             }
         }
     } // constructor
+
+    virtual void analyze() = 0;
 };
 
 //Accesses data from the underlying TTree wrapped by a NanoEvent lazily

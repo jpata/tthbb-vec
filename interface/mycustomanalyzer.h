@@ -7,7 +7,8 @@ public:
 
     LeptonPairAnalyzer(Output& _output) : output(_output) {};
 
-    virtual void analyze(Event& event) {
+    virtual void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
         vector<LazyObject*> leps;
         for (const auto& lep : event.muons) {
             leps.push_back((LazyObject*)&lep);
@@ -39,7 +40,7 @@ public:
         event.highest_inv_mass = highest_inv_mass;
     };
     
-    virtual const string getName() const {
+    virtual const string getName() const override {
         return "LeptonPairAnalyzer";
     };
 };
@@ -53,12 +54,14 @@ public:
     }
    
  
-    void analyze(Event& event) {
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
         highest_inv_mass = event.highest_inv_mass;
         TreeAnalyzer::analyze(event);
     }
 
-    const string getName() {
+    const string getName() const override {
         return "MyTreeAnalyzer"; 
     }
 };
+

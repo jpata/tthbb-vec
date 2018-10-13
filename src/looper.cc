@@ -11,7 +11,6 @@
 //our own custom analyzers
 #include "myanalyzers.h"
 
-
 int main( int argc, char *argv[]) {
     using json = nlohmann::json;
 

@@ -1,13 +1,27 @@
+#!/usr/bin/env python
 import ROOT
 import json
 import sys
 
+def load_header(path):
+    print "loading header {0}".format(path)
+    ret = ROOT.gROOT.ProcessLine('#include "{0}"'.format(path))
+    if ret != 0:
+        raise Exception("Could not load header {0}".format(path))
+
+def load_lib(path):
+    ret = ROOT.gSystem.Load(path)
+    if ret != 0:
+        raise Exception("Could not load library {0}".format(path))
+
 def setup():
     ROOT.gROOT.ProcessLine('.include interface')
-    ROOT.gROOT.ProcessLine('#include "nanoflow.h"')
-    ROOT.gROOT.ProcessLine('#include "myanalyzers.h"')
-    ROOT.gROOT.ProcessLine('#include "mycustomanalyzer.h"')
-    ROOT.gSystem.Load('libnanoflow.so')
+   
+    load_header("nanoflow.h") 
+    load_header("myanalyzers.h") 
+    load_header("mycustomanalyzer.h") 
+    
+    load_lib("bin/libnanoflow.so")    
 
 def FileReport_to_dict(p):
     r = {
@@ -23,9 +37,10 @@ def FileReport_to_dict(p):
     return r
 
 if __name__ == "__main__":
-    
     setup()
+    
     vector_Analyzer = getattr(ROOT, "vector<Analyzer*>")
+    looper_func = getattr(ROOT, "looper_main")
 
     input_json = sys.argv[1]
     output_json = sys.argv[2]
@@ -49,7 +64,7 @@ if __name__ == "__main__":
     for inf in conf.input_files:
         tf = ROOT.TFile.Open(inf)
         reader = ROOT.TTreeReader("Events", tf)
-        report = ROOT.looper_main(inf, reader, output, analyzers, 100000)
+        report = looper_func(inf, reader, output, analyzers, 200000)
         all_reports.append(report)
    
     output.close()

@@ -6,11 +6,61 @@
 
 #include "nanoflow.h"
 
-TLorentzVector make_lv(float pt, float eta, float phi, float mass) {
-    TLorentzVector lv;
-    lv.SetPtEtaPhiM(pt, eta, phi, mass);
-    return lv;
-}
+TLorentzVector make_lv(float pt, float eta, float phi, float mass);
+
+//This is our basic Event representation
+//We always construct vectors of basic physics objects such as jets and leptons
+//On the other hand, since this is done for every event, we want to keep it as
+//minimal as possible.
+class Event : public NanoEvent {
+public:
+
+    //We need to predefine the event content here, such that 
+    vector<Jet> jets;
+    vector<Muon> muons;
+    vector<Electron> electrons;
+
+    double highest_inv_mass;
+    Event(TTreeReader& _reader) : NanoEvent(_reader) {}
+
+    //This is very important to make sure that we always start with a clean
+    //event and we don't keep any information from previous events
+    void clear_event() {
+        jets.clear();
+        muons.clear();
+        electrons.clear();
+        highest_inv_mass = 0;
+    }
+
+    //In this function we create our event representation
+    void analyze() {
+        clear_event();
+    
+        //Get the number of jets as an uint
+        const auto nJet = this->lc_uint.get(string_hash("nJet"));
+        //Construct the jet objects from the branches
+        for (unsigned int _nJet = 0; _nJet < nJet; _nJet++) {
+            Jet jet(*this, _nJet);
+            jets.push_back(jet);
+        }
+    
+        //Construct muons
+        const auto nMuon = this->lc_uint.get(string_hash("nMuon"));
+        for (unsigned int _nMuon = 0; _nMuon < nMuon; _nMuon++) {
+            Muon muon(*this, _nMuon);
+            muons.push_back(muon);
+        }
+    
+        //Construct electrons
+        const auto nElectron = this->lc_uint.get(string_hash("nElectron"));
+        for (unsigned int _nElectron = 0; _nElectron < nElectron; _nElectron++) {
+            Electron electron(*this, _nElectron);
+            electrons.push_back(electron);
+        }
+    }
+
+};
+
 
 //This example Analyzer computes the sum(pt) of all the jets, muons and electrons in the event
 //and stores it in a histogram. The actual implementation code is located in myanalyzers.cc,
@@ -32,7 +82,8 @@ public:
         h_sumpt = output.histograms_1d.at(string_hash("h_sumpt"));
     }
 
-    void analyze(Event& event) {
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
         double sum_pt = 0.0;
     
         for (auto jet : event.jets) {
@@ -47,7 +98,7 @@ public:
         h_sumpt->Fill(sum_pt);
     }
 
-    virtual const string getName() const {
+    virtual const string getName() const override {
         return "SumPtAnalyzer";
     }
 };
@@ -70,10 +121,11 @@ public:
         h_nPVs = output.histograms_1d.at(string_hash("h_nPVs"));
     }
 
-    void analyze(Event& event) {
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
         h_nPVs->Fill(event.lc_int.get(string_hash("PV_npvsGood")));
     }
-    const string getName() const {
+    const string getName() const override {
         return "EventVarsAnalyzer";
     }
 };
@@ -104,7 +156,8 @@ public:
         h_deltaR = output.histograms_1d.at(string_hash("h_deltaR"));
     }
 
-    void analyze(Event& event) {
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
         const auto njets = event.jets.size();
     
         //we would like to store a list of all the jet pairs along with their delta R
@@ -130,11 +183,17 @@ public:
         }
     }
 
-    const string getName() const {
+    const string getName() const override {
         return "JetDeltaRAnalyzer";
     }
 };
 
-TLorentzVector make_lv(float pt, float eta, float phi, float mass);
+FileReport looper_main(
+    const string& filename,
+    TTreeReader& reader,
+    Output& output,
+    const vector<Analyzer*>& analyzers,
+    long long max_events = -1
+    );
 
 #endif

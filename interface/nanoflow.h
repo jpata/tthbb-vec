@@ -15,35 +15,11 @@
 using namespace std;
 using nlohmann::json;
 
-//This is our basic Event representation
-//We always construct vectors of basic physics objects such as jets and leptons
-//On the other hand, since this is done for every event, we want to keep it as
-//minimal as possible.
-class Event : public NanoEvent {
-public:
-
-    //We need to predefine the event content here, such that 
-    vector<Jet> jets;
-    vector<Muon> muons;
-    vector<Electron> electrons;
-
-    double highest_inv_mass;
-    Event(TTreeReader& _reader) : NanoEvent(_reader) {}
-
-    //This is very important to make sure that we always start with a clean
-    //event and we don't keep any information from previous events
-    void clear_event();
-
-    //In this function we create our event representation
-    void analyze();
-
-};
-
 //This is a simple template of an Analyzer
 //An Analyzer receives a read-only event and processes it in some simple way
 class Analyzer {
 public:
-    virtual void analyze(Event& event) = 0;
+    virtual void analyze(NanoEvent& event) = 0;
     virtual const string getName() const = 0;
 };
 
@@ -80,7 +56,7 @@ public:
     unsigned int br_luminosityBlock;
     unsigned long br_event;
  
-    virtual void analyze(Event& event);
+    virtual void analyze(NanoEvent& event);
     virtual const string getName() const;
 };
 
@@ -124,18 +100,6 @@ public:
 };
 
 void to_json(json& j, const FileReport& p);
-
-//This is the main event loop
-//Given a TTreeReader reader, we process all the specified analyzers and store the
-//output in the Output data structure.
-//You shouldn't have to add anything to the event loop if you want to compute a new
-//quantity - rather, you can add a new Analyzer
-FileReport looper_main(
-    const string& filename,
-    TTreeReader& reader,
-    Output& output,
-    const vector<Analyzer*>& analyzers,
-    long long max_events = -1);
 
 //
 //Utility functions
