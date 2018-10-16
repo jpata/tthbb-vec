@@ -33,10 +33,13 @@ int main( int argc, char *argv[]) {
     //Define the sequence of analyzers you want to run
     //These are defined in the myanalyzers.h/myanalyzers.cc files
     vector<Analyzer*> analyzers = {
-        new SumPtAnalyzer(*output),
-        new EventVarsAnalyzer(*output),
-        //std::make_shared<JetDeltaRAnalyzer>(output),
-        new TreeAnalyzer(*output)
+      new JetEventAnalyzer(*output),
+      new MuonEventAnalyzer(*output),
+      new ElectronEventAnalyzer(*output),
+      new SumPtAnalyzer(*output),
+      new EventVarsAnalyzer(*output),
+      new JetDeltaRAnalyzer(*output),
+      new TreeAnalyzer(*output)
     };
    
     //Define the final output report 

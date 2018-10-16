@@ -1,0 +1,15 @@
+[
+    {
+        "analyzer_durations": [
+            2118794087,
+            450590146,
+            13302217134
+        ],
+        "cpu_time": 27.23,
+        "event_duration": 15053311467,
+        "filename": "file:///Users/joosep/Documents/nano//ttjets_sl/0E0B09D0-6A59-E811-9F00-008CFAFBF576.root",
+        "num_events_processed": 1194865,
+        "real_time": 31.195775985717773,
+        "speed": 38.30214066632097
+    }
+]
