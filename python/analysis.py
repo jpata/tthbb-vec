@@ -3,6 +3,12 @@
 Attributes:
     LOG_MODULE_NAME (TYPE): Description
 """
+
+import sys
+tmpargv = sys.argv
+sys.argv = ['-b', '-n']
+import ROOT
+
 import yaml
 import subprocess
 import os
@@ -12,7 +18,9 @@ import argparse
 import glob
 import multiprocessing
 
-from looper import run_looper, run_looper_args
+from looper import run_looper, run_looper_args, setup_nanoflow
+
+sys.argv[:] = tmpargv[:]
 
 LOG_MODULE_NAME = logging.getLogger(__name__)
 
@@ -173,6 +181,10 @@ class Dataset:
         if not os.path.exists(target_dir):
    	    raise Exception("Job files not created, call create_jobfiles() first")
         return glob.glob(os.path.join(target_dir, "job_*.json"))
+
+    def remove_jobfiles(self):
+        jobfiles = self.get_jobfiles()
+        map(os.remove, jobfiles)
  
 class Analysis:
 
@@ -232,6 +244,13 @@ class Analysis:
         for dataset in self.data_datasets:
             dataset.cache_files()
 
+
+    def remove_jobfiles(self):
+        for ds in self.mc_datasets:
+            ds.remove_jobfiles()
+        for ds in self.data_datasets:
+            ds.remove_jobfiles()
+
     def create_jobfiles(self, perjob):
         """Summary
         
@@ -279,6 +298,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    setup_nanoflow()
 
     logging.basicConfig(level=getattr(logging, args.loglevel))
     
@@ -288,7 +308,8 @@ if __name__ == "__main__":
         analysis.cache_filenames()
 
     if args.create_jobfiles:
-        analysis.create_jobfiles(2)
+        analysis.remove_jobfiles()
+        analysis.create_jobfiles(10)
     
     if args.run_jobs:
         analysis.run_jobs()

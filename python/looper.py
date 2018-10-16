@@ -22,8 +22,6 @@ def setup_nanoflow():
     
     load_lib("bin/libnanoflow.so")    
 
-setup_nanoflow()
-
 def FileReport_to_dict(p):
     r = {
         "filename": p.filename,
@@ -77,12 +75,12 @@ class SequentialAnalysis:
 def run_looper(input_json, output_json):
     an = SequentialAnalysis(input_json) 
 
-    an.add(ROOT.JetEventAnalyzer(an.output))
+    #an.add(ROOT.JetEventAnalyzer(an.output))
     an.add(ROOT.MuonEventAnalyzer(an.output))
-    an.add(ROOT.ElectronEventAnalyzer(an.output))
-    an.add(ROOT.SumPtAnalyzer(an.output))
+    #an.add(ROOT.ElectronEventAnalyzer(an.output))
+    #an.add(ROOT.SumPtAnalyzer(an.output))
     an.add(ROOT.EventVarsAnalyzer(an.output))
-    an.add(ROOT.LeptonPairAnalyzer(an.output))
+    #an.add(ROOT.LeptonPairAnalyzer(an.output))
     an.add(ROOT.MyTreeAnalyzer(an.output))
     
     reports = an.run()
@@ -92,6 +90,8 @@ def run_looper_args(args):
     run_looper(*args)
 
 if __name__ == "__main__":
+   
+    setup_nanoflow()
     
     input_json = sys.argv[1]
     output_json = sys.argv[2]
