@@ -10,6 +10,9 @@ import logging
 import json
 import argparse
 import glob
+import multiprocessing
+
+from looper import run_looper, run_looper_args
 
 LOG_MODULE_NAME = logging.getLogger(__name__)
 
@@ -36,7 +39,7 @@ class Dataset:
         process (string): The nickname for the physics process that this dataset belongs to
     """
     
-    def __init__(self, name, process, global_file_prefix, cache_location, use_cache):
+    def __init__(self, name, process, global_file_prefix, cache_location, use_cache, tmpdir):
         """Summary
         
         Args:
@@ -51,6 +54,7 @@ class Dataset:
         self.global_file_prefix = global_file_prefix
         self.cache_location = cache_location
         self.use_cache = use_cache
+        self.tmpdir = tmpdir
 
     def __repr__(self):
         """
@@ -75,7 +79,7 @@ class Dataset:
         Returns:
             TYPE: Description
         """
-        return os.path.join("data", "das_cache", self.process, self.escape_name() + ".txt")
+        return os.path.join(self.tmpdir, "das_cache", self.process, self.escape_name() + ".txt")
     
     def job_filename(self, njob):
         """Summary
@@ -86,7 +90,7 @@ class Dataset:
         Returns:
             TYPE: Description
         """
-        return os.path.join("data", "jobs", self.process, self.escape_name(), "job_{0}.json".format(njob))
+        return os.path.join(self.tmpdir, "jobs", self.process, self.escape_name(), "job_{0}.json".format(njob))
 
     def cache_files(self):
         """Summary
@@ -168,7 +172,7 @@ class Dataset:
         target_dir = os.path.dirname(self.job_filename(0))
         if not os.path.exists(target_dir):
    	    raise Exception("Job files not created, call create_jobfiles() first")
-        return glob.glob(os.path.join(target_dir, "*.json"))
+        return glob.glob(os.path.join(target_dir, "job_*.json"))
  
 class Analysis:
 
@@ -206,16 +210,17 @@ class Analysis:
             global_file_prefix = data_loaded["datasets"]["global_file_prefix"]
             cache_location = data_loaded["datasets"]["cache_location"]
             use_cache = data_loaded["datasets"]["use_cache"]
+            tmpdir = "/fast/tmp1"
 
             mc_datasets = []
             for process_name in data_loaded["datasets"]["simulation"]:
                 for ds in data_loaded["datasets"]["simulation"][process_name]:
-                    mc_datasets.append(Dataset(ds["name"], process_name, global_file_prefix, cache_location, use_cache))
+                    mc_datasets.append(Dataset(ds["name"], process_name, global_file_prefix, cache_location, use_cache, tmpdir))
             
             data_datasets = []
             for process_name in data_loaded["datasets"]["data"]:
                 for ds in data_loaded["datasets"]["data"][process_name]:
-                    data_datasets.append(Dataset(ds["name"], process_name, global_file_prefix, cache_location, use_cache))
+                    data_datasets.append(Dataset(ds["name"], process_name, global_file_prefix, cache_location, use_cache, tmpdir))
 
             return Analysis(mc_datasets, data_datasets)
    
@@ -239,6 +244,19 @@ class Analysis:
         for ds in self.data_datasets:
             ds.create_jobfiles(perjob)
 
+
+    def run_jobs(self):
+
+        ijobs = 0
+        args = []
+        for ds in self.mc_datasets:
+            for jobfile in ds.get_jobfiles():
+                args += [(jobfile, jobfile + ".out")]
+        
+        p = multiprocessing.Pool(16)
+        p.map(run_looper_args, args)
+        p.close()  
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='The nanoflow analysis controller')
@@ -250,6 +268,9 @@ if __name__ == "__main__":
         action="store_true"
     )
     parser.add_argument('--create_jobfiles', help='Creates the jobfiles for the looper',
+        action="store_true"
+    )
+    parser.add_argument('--run_jobs', help='Runs the analysis jobs',
         action="store_true"
     )
     parser.add_argument('-l','--loglevel', help='The logging level',
@@ -267,4 +288,7 @@ if __name__ == "__main__":
         analysis.cache_filenames()
 
     if args.create_jobfiles:
-        analysis.create_jobfiles(1)
+        analysis.create_jobfiles(2)
+    
+    if args.run_jobs:
+        analysis.run_jobs()

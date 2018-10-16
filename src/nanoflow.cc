@@ -53,7 +53,7 @@ void FileReport::print(std::ostream& stream) {
     analyzer_runtime_fracs.push_back(event_duration / tot_duration);
 
     cpu_eff = this->cpu_time / this->real_time;
-    stream << "FileReport: eff=" << cpu_eff << ",";
+    stream << "FileReport eff=" << cpu_eff << ",";
 
     stream << "NanoEvent=" << analyzer_runtime_fracs[analyzer_names.size()] << ",";
     for (unsigned int i = 0; i < analyzer_names.size(); i++) {

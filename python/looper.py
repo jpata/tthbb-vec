@@ -14,13 +14,15 @@ def load_lib(path):
     if ret != 0:
         raise Exception("Could not load library {0}".format(path))
 
-def setup():
+def setup_nanoflow():
     ROOT.gROOT.ProcessLine('.include interface')
    
     load_header("nanoflow.h") 
     load_header("myanalyzers.h") 
     
     load_lib("bin/libnanoflow.so")    
+
+setup_nanoflow()
 
 def FileReport_to_dict(p):
     r = {
@@ -35,46 +37,63 @@ def FileReport_to_dict(p):
     }
     return r
 
-if __name__ == "__main__":
-    setup()
-    
-    vector_Analyzer = getattr(ROOT, "vector<Analyzer*>")
-    looper_main = getattr(ROOT, "looper_main")
+class SequentialAnalysis:
 
+    def __init__(self, input_json):
+        self.modules = []
+        
+        self.conf = ROOT.Configuration(input_json)
+        self.output = ROOT.Output(self.conf.output_filename)
+    
+        vector_Analyzer = getattr(ROOT, "vector<Analyzer*>")
+        self.analyzers = vector_Analyzer()
+
+    def add(self, module):
+        self.modules.append(module)
+
+    def run(self):
+        looper_main = getattr(ROOT, "looper_main")
+        all_reports = []
+
+        for module in self.modules:
+            self.analyzers.push_back(module)
+  
+        for inf in self.conf.input_files:
+            tf = ROOT.TFile.Open(inf)
+            reader = ROOT.TTreeReader("Events", tf)
+            report = looper_main(self.conf, inf, reader, self.output, self.analyzers, -1)
+            all_reports.append(report)
+
+        self.output.close()
+        
+        reports = [FileReport_to_dict(p) for p in all_reports]
+	return reports
+   
+    def save(self, reports, output_json): 
+        with open(output_json, "w") as outfile:
+            json.dump(reports, outfile, indent=2)
+
+
+def run_looper(input_json, output_json):
+    an = SequentialAnalysis(input_json) 
+
+    an.add(ROOT.JetEventAnalyzer(an.output))
+    an.add(ROOT.MuonEventAnalyzer(an.output))
+    an.add(ROOT.ElectronEventAnalyzer(an.output))
+    an.add(ROOT.SumPtAnalyzer(an.output))
+    an.add(ROOT.EventVarsAnalyzer(an.output))
+    an.add(ROOT.LeptonPairAnalyzer(an.output))
+    an.add(ROOT.MyTreeAnalyzer(an.output))
+    
+    reports = an.run()
+    an.save(reports, output_json)
+
+def run_looper_args(args):
+    run_looper(*args)
+
+if __name__ == "__main__":
+    
     input_json = sys.argv[1]
     output_json = sys.argv[2]
-    
-    conf = ROOT.Configuration(input_json)
-    conf.use_jets = False
-    output = ROOT.Output(conf.output_filename)
-    
-    analyzers = vector_Analyzer()
-
-    jetevent_analyzer = ROOT.JetEventAnalyzer(output)
-    muonevent_analyzer = ROOT.MuonEventAnalyzer(output)
-    electronevent_analyzer = ROOT.ElectronEventAnalyzer(output)
-    sumpt_analyzer = ROOT.SumPtAnalyzer(output)
-    eventvars_analyzer = ROOT.EventVarsAnalyzer(output)
-    leppair_analyzer = ROOT.LeptonPairAnalyzer(output)
-    tree_analyzer = ROOT.MyTreeAnalyzer(output)
-    
-    #analyzers.push_back(jetevent_analyzer)
-    analyzers.push_back(muonevent_analyzer)
-    analyzers.push_back(electronevent_analyzer)
-    analyzers.push_back(leppair_analyzer)
-    analyzers.push_back(sumpt_analyzer)
-    analyzers.push_back(eventvars_analyzer)
-    analyzers.push_back(tree_analyzer)
-
-    all_reports = []    
-    for inf in conf.input_files:
-        tf = ROOT.TFile.Open(inf)
-        reader = ROOT.TTreeReader("Events", tf)
-        report = looper_main(conf, inf, reader, output, analyzers, -1)
-        all_reports.append(report)
    
-    output.close()
-    
-    with open(output_json, "w") as outfile:
-        reports = [FileReport_to_dict(p) for p in all_reports]
-        json.dump(reports, outfile, indent=2)
+    run_looper(input_json, output_json)
