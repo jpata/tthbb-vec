@@ -26,17 +26,6 @@ std::string get_time()
     return ss.str();
 }
 
-Configuration::Configuration(const std::string& json_file) {
-    
-    ifstream inp(json_file);
-    json input_json;
-    inp >> input_json;
-
-    for (auto fn : input_json.at("input_filenames")) {
-      input_files.push_back(fn);
-    }
-    output_filename = input_json.at("output_filename").get<std::string>();
-}
 
 FileReport::FileReport(const std::string& _filename, const vector<Analyzer*>& analyzers) :
     event_duration(0),
@@ -56,15 +45,17 @@ FileReport::FileReport(const std::string& _filename, const vector<Analyzer*>& an
 void FileReport::print(std::ostream& stream) {
     auto cpu_eff = this->cpu_time / this->real_time;
     vector<double> analyzer_runtime_fracs;
-    auto tot_duration = accumulate(analyzer_durations.begin(), analyzer_durations.end(), 0.0);
+    auto tot_duration = accumulate(analyzer_durations.begin(), analyzer_durations.end(), 0.0) + event_duration;
  
     for (auto dur : analyzer_durations) {
         analyzer_runtime_fracs.push_back(dur / tot_duration);
     }
+    analyzer_runtime_fracs.push_back(event_duration / tot_duration);
 
     cpu_eff = this->cpu_time / this->real_time;
     stream << "FileReport: eff=" << cpu_eff << ",";
 
+    stream << "NanoEvent=" << analyzer_runtime_fracs[analyzer_names.size()] << ",";
     for (unsigned int i = 0; i < analyzer_names.size(); i++) {
         stream << analyzer_names[i] << "=" << analyzer_runtime_fracs[i] << ",";        
     }

@@ -60,17 +60,6 @@ public:
     virtual const string getName() const;
 };
 
-//This data structure contains the configuration of the event loop.
-//Currently, this is only the input and output files.
-//We can load the configuration from a json file
-class Configuration {
-public:
-    vector<string> input_files;
-    string output_filename;
-
-    Configuration(const string& json_file);
-};
-
 
 class FileReport {
 public:

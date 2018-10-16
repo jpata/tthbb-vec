@@ -6,7 +6,106 @@
 
 #include "nanoflow.h"
 
-TLorentzVector make_lv(float pt, float eta, float phi, float mass);
+TLorentzVector make_lv(float pt, float eta, float phi, float mass) {
+    TLorentzVector lv;
+    lv.SetPtEtaPhiM(pt, eta, phi, mass);
+    return lv;
+}
+
+//We can specialize the LazyObject for specific physics objects
+//by wrapping the most commonly used branches.
+//Jet type based on the on-demand reading of quantities from the underlying TTree
+class Jet : public LazyObject {
+public:
+    const float _pt, _eta, _phi, _mass;
+    Jet(const NanoEvent& _event, unsigned int _index) :
+    LazyObject(_event, _index),
+    _pt(this->get_float(string_hash("Jet_pt"))),
+    _eta(this->get_float(string_hash("Jet_eta"))),
+    _phi(this->get_float(string_hash("Jet_phi"))),
+    _mass(this->get_float(string_hash("Jet_mass"))) {
+    }
+
+    float pt() const {
+        return _pt;
+    }
+
+    float eta() const {
+        return _eta;
+    }
+
+    float phi() const {
+        return _phi;
+    }
+
+    float mass() const  {
+        return _mass;
+    }
+};
+
+class Muon : public LazyObject {
+public:
+    Muon(const NanoEvent& _event, unsigned int _index) : LazyObject(_event, _index) {
+    }
+
+    float pt() const {
+        return this->get_float(string_hash("Muon_pt"));
+    }
+
+    float eta() const {
+        return this->get_float(string_hash("Muon_eta"));
+    }
+
+    float phi() const {
+        return this->get_float(string_hash("Muon_phi"));
+    }
+
+    float mass() const  {
+        return this->get_float(string_hash("Muon_mass"));
+    }
+};
+
+class Electron : public LazyObject {
+public:
+    Electron(const NanoEvent& _event, unsigned int _index) : LazyObject(_event, _index) {
+    }
+
+    float pt() const {
+        return this->get_float(string_hash("Electron_pt"));
+    }
+
+    float eta() const {
+        return this->get_float(string_hash("Electron_eta"));
+    }
+
+    float phi() const {
+        return this->get_float(string_hash("Electron_phi"));
+    }
+
+    float mass() const  {
+        return this->get_float(string_hash("Electron_mass"));
+    }
+};
+
+//This data structure contains the configuration of the event loop.
+//Currently, this is only the input and output files.
+//We can load the configuration from a json file
+class Configuration {
+public:
+    vector<string> input_files;
+    string output_filename;
+    
+    Configuration(const std::string& json_file) {
+        ifstream inp(json_file);
+        json input_json;
+        inp >> input_json;
+    
+        for (auto fn : input_json.at("input_filenames")) {
+          input_files.push_back(fn);
+        }
+        output_filename = input_json.at("output_filename").get<std::string>();
+    }
+};
 
 //This is our basic Event representation
 //We always construct vectors of basic physics objects such as jets and leptons
@@ -15,13 +114,19 @@ TLorentzVector make_lv(float pt, float eta, float phi, float mass);
 class Event : public NanoEvent {
 public:
 
-    //We need to predefine the event content here, such that 
+    const Configuration& config;
+
+    //We need to predefine the event content here
+
+    //Physics objects
     vector<Jet> jets;
     vector<Muon> muons;
     vector<Electron> electrons;
 
-    double highest_inv_mass;
-    Event(TTreeReader& _reader) : NanoEvent(_reader) {}
+    //Simple variables
+    double lep2_highest_inv_mass;
+
+    Event(TTreeReader& _reader, const Configuration& _config) : NanoEvent(_reader), config(_config) {}
 
     //This is very important to make sure that we always start with a clean
     //event and we don't keep any information from previous events
@@ -29,36 +134,98 @@ public:
         jets.clear();
         muons.clear();
         electrons.clear();
-        highest_inv_mass = 0;
+        lep2_highest_inv_mass = 0;
     }
 
     //In this function we create our event representation
+    //In order to have a fast runtime, we need to do the
+    //absolute minimum here.
     void analyze() {
         clear_event();
-    
-        //Get the number of jets as an uint
-        const auto nJet = this->lc_uint.get(string_hash("nJet"));
-        //Construct the jet objects from the branches
-        for (unsigned int _nJet = 0; _nJet < nJet; _nJet++) {
-            Jet jet(*this, _nJet);
-            jets.push_back(jet);
-        }
-    
-        //Construct muons
-        const auto nMuon = this->lc_uint.get(string_hash("nMuon"));
-        for (unsigned int _nMuon = 0; _nMuon < nMuon; _nMuon++) {
-            Muon muon(*this, _nMuon);
-            muons.push_back(muon);
-        }
-    
-        //Construct electrons
-        const auto nElectron = this->lc_uint.get(string_hash("nElectron"));
-        for (unsigned int _nElectron = 0; _nElectron < nElectron; _nElectron++) {
-            Electron electron(*this, _nElectron);
-            electrons.push_back(electron);
-        }
     }
 
+};
+
+class MuonEventAnalyzer : public Analyzer {
+public:
+    Output& output;
+
+    //We store a pointer to the output histogram distribution here in order to address it conveniently
+    //The histogram itself is stored in the Output data structure
+    MuonEventAnalyzer(Output& _output) : output(_output) {
+        cout << "Creating MuonEventAnalyzer" << endl;
+    }
+
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
+        
+        const auto nMuon = event.lc_uint.get(string_hash("nMuon"));
+        for (unsigned int _nMuon = 0; _nMuon < nMuon; _nMuon++) {
+            Muon muon(event, _nMuon);
+            event.muons.push_back(muon);
+        }
+
+    }
+
+    virtual const string getName() const override {
+        return "MuonEventAnalyzer";
+    }
+};
+
+class ElectronEventAnalyzer : public Analyzer {
+public:
+    Output& output;
+
+    //We store a pointer to the output histogram distribution here in order to address it conveniently
+    //The histogram itself is stored in the Output data structure
+    ElectronEventAnalyzer(Output& _output) : output(_output) {
+        cout << "Creating ElectronEventAnalyzer" << endl;
+    }
+
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
+        
+        const auto nElectron = event.lc_uint.get(string_hash("nElectron"));
+        for (unsigned int _nElectron = 0; _nElectron < nElectron; _nElectron++) {
+            Electron electron(event, _nElectron);
+            event.electrons.push_back(electron);
+        }
+
+    }
+
+    virtual const string getName() const override {
+        return "ElectronEventAnalyzer";
+    }
+};
+
+
+class JetEventAnalyzer : public Analyzer {
+public:
+    Output& output;
+
+    //We store a pointer to the output histogram distribution here in order to address it conveniently
+    //The histogram itself is stored in the Output data structure
+    JetEventAnalyzer(Output& _output) : output(_output) {
+        cout << "Creating JetEventAnalyzer" << endl;
+    }
+
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
+        
+        //Get the number of jets as an uint
+        const auto nJet = event.lc_uint.get(string_hash("nJet"));
+        
+        //Construct the jet objects from the branches
+        for (unsigned int _nJet = 0; _nJet < nJet; _nJet++) {
+            Jet jet(event, _nJet);
+            event.jets.push_back(jet);
+        }
+
+    }
+
+    virtual const string getName() const override {
+        return "JetEventAnalyzer";
+    }
 };
 
 
@@ -189,13 +356,72 @@ public:
 };
 
 
-//FileReport looper_main(
-//    const string& filename,
-//    TTreeReader& reader,
-//    Output& output,
-//    const vector<Analyzer*>& analyzers,
-//    long long max_events = -1
-//    );
+class LeptonPairAnalyzer : public Analyzer {
+public:
+    Output& output;
+
+    LeptonPairAnalyzer(Output& _output) : output(_output) {};
+
+    virtual void analyze(NanoEvent& _event) override {
+
+        auto& event = static_cast<Event&>(_event);
+
+	
+        vector<LazyObject*> leps;
+        for (const auto& lep : event.muons) {
+            leps.push_back((LazyObject*)&lep);
+        }
+        for (const auto& lep : event.electrons) {
+            leps.push_back((LazyObject*)&lep);
+        }
+        
+        vector<TLorentzVector> lep_lvs;
+        for (const auto* lep : leps) {
+            lep_lvs.push_back(make_lv(lep->pt(), lep->eta(), lep->phi(), lep->mass()));
+        }
+
+        double lep2_highest_inv_mass = 0;
+        for (auto il1 = 0; il1 < leps.size(); il1++) {
+            for (auto il2 = il1 + 1; il2 < leps.size(); il2++) {
+
+                const auto& lv1 = lep_lvs.at(il1);
+                const auto& lv2 = lep_lvs.at(il2);
+                
+                const auto& lv_tot = lv1 + lv2;
+                const auto inv_mass = lv_tot.M();
+
+                if (inv_mass > lep2_highest_inv_mass) {
+                    lep2_highest_inv_mass = inv_mass;
+                }
+            }
+        }
+        event.lep2_highest_inv_mass = lep2_highest_inv_mass;
+    };
+    
+    virtual const string getName() const override {
+        return "LeptonPairAnalyzer";
+    };
+};
+
+class MyTreeAnalyzer : public TreeAnalyzer {
+public:
+    float lep2_highest_inv_mass;
+    
+    MyTreeAnalyzer(Output& _output) : TreeAnalyzer(_output) {
+        out_tree->Branch("lep2_highest_inv_mass", &lep2_highest_inv_mass, "lep2_highest_inv_mass/F");
+    }
+ 
+    void analyze(NanoEvent& _event) override {
+        auto& event = static_cast<Event&>(_event);
+        lep2_highest_inv_mass = event.lep2_highest_inv_mass;
+        //lep2_highest_inv_mass = 0.0;
+        TreeAnalyzer::analyze(event);
+    }
+
+    const string getName() const override {
+        return "MyTreeAnalyzer"; 
+    }
+};
 
 //This is the main event loop
 //Given a TTreeReader reader, we process all the specified analyzers and store the
@@ -203,6 +429,7 @@ public:
 //You shouldn't have to add anything to the event loop if you want to compute a new
 //quantity - rather, you can add a new Analyzer
 FileReport looper_main(
+    const Configuration& config,
     const string& filename,
     TTreeReader& reader,
     Output& output,
@@ -216,8 +443,8 @@ FileReport looper_main(
     TStopwatch sw;
     sw.Start();
 
-    //We initialize the event from the TTreeReader
-    Event event(reader);
+    //We initialize the C++ representation of the event (data row) from the TTreeReader
+    Event event(reader, config);
 
     //Keep track of the number of events we processed
     unsigned long long nevents = 0;
@@ -289,10 +516,5 @@ FileReport looper_main(
     return report;
 }
 
-TLorentzVector make_lv(float pt, float eta, float phi, float mass) {
-    TLorentzVector lv;
-    lv.SetPtEtaPhiM(pt, eta, phi, mass);
-    return lv;
-}
 
 #endif

@@ -51,7 +51,7 @@ int main( int argc, char *argv[]) {
         }
         TTreeReader reader("Events", tf);
 
-        auto report = looper_main(input_file, reader, *output, analyzers, -1);
+        auto report = looper_main(*conf, input_file, reader, *output, analyzers, -1);
         total_report.push_back(report);
         tf->Close();
     }
