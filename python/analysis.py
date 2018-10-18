@@ -1,9 +1,8 @@
-"""Summary
+#!/usr/bin/env python
 
-Attributes:
-    LOG_MODULE_NAME (TYPE): Description
-"""
 
+#Hack to get ROOT to ignore command line arguments that we want
+#to pass to Python
 import sys
 tmpargv = sys.argv
 sys.argv = ['-b', '-n']
@@ -222,7 +221,7 @@ class Analysis:
             global_file_prefix = data_loaded["datasets"]["global_file_prefix"]
             cache_location = data_loaded["datasets"]["cache_location"]
             use_cache = data_loaded["datasets"]["use_cache"]
-            tmpdir = "/fast/tmp1"
+            tmpdir = data_loaded["datasets"]["workdirectory"]
 
             mc_datasets = []
             for process_name in data_loaded["datasets"]["simulation"]:
@@ -286,6 +285,9 @@ if __name__ == "__main__":
     parser.add_argument('--cache_das', help='Caches the dataset filenames from DAS',
         action="store_true"
     )
+    parser.add_argument('--remove_jobfiles', help='Removes the jobfiles from a previous run',
+        action="store_true"
+    )
     parser.add_argument('--create_jobfiles', help='Creates the jobfiles for the looper',
         action="store_true"
     )
@@ -307,8 +309,10 @@ if __name__ == "__main__":
     if args.cache_das:
         analysis.cache_filenames()
 
-    if args.create_jobfiles:
+    if args.remove_jobfiles:
         analysis.remove_jobfiles()
+
+    if args.create_jobfiles:
         analysis.create_jobfiles(10)
     
     if args.run_jobs:

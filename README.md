@@ -42,6 +42,12 @@ root -l out.root
 
 The nanoflow analysis code is broken up into the Event, Analyzers and the looper. In the Event we specify the C++ structure of the event. Analyzers process and transform the event and optionally produce some output in the form of histograms, trees etc. The code compiles into a single executable, the `looper`. The `looper` runs all the predefined analyzers and produces an output ROOT file, as well as a report file `out.json` with the job runtime, time required per analyzer etc. All the input arguments to the looper is configured by a json file: `./looper input.json out.json`. In the `input.json` file, we mainly configure the input ROOT files and the output ROOT file, see `data/input_xrootd.json`.
 
-The input datasets are defined in the yaml file in `data/analysis.yaml`. From this, we can generate the input json using `python python/analysis.py --das_cache --create_jobfiles`.
+The input datasets are defined in the yaml file in `data/analysis.yaml`. From this, we can generate the input json using
+
+~~~
+./python/analysis.py --cache_das
+./python/analysis.py --create_jobfiles
+./python/analysis.py --run_jobs
+~~~
 
 In order to add a new Analyzer, see the examples in `interface/myanalyzers.h`. To change which analyzers are run, simply add them in `src/looper.cc`.

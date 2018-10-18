@@ -3,7 +3,6 @@
 //Output class
 Output::Output(const std::string& outfn) {
     cout << "Creating output file " << outfn.c_str() << endl;
-    //outfile = std::move(std::unique_ptr<TFile>(new TFile(outfn.c_str(), "RECREATE")));
     outfile = make_unique<TFile>(outfn.c_str(), "RECREATE");
     outfile->cd();
 }
@@ -90,6 +89,10 @@ TreeAnalyzer::TreeAnalyzer(Output& _output) : output(_output) {
 }
 
 void TreeAnalyzer::analyze(NanoEvent& event) {
+    event.lc_uint.read(string_hash("run"));
+    event.lc_uint.read(string_hash("luminosityBlock"));
+    event.lc_ulong64.read(string_hash("event"));
+
     br_run = event.lc_uint.get(string_hash("run"));
     br_luminosityBlock = event.lc_uint.get(string_hash("luminosityBlock"));
     br_event = event.lc_ulong64.get(string_hash("event"));
@@ -100,3 +103,5 @@ void TreeAnalyzer::analyze(NanoEvent& event) {
 const string TreeAnalyzer::getName() const {
     return "TreeAnalyzer";
 }
+
+LazyObject::~LazyObject() {}

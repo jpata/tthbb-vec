@@ -9,6 +9,8 @@
 #include <TTreeReaderArray.h>
 #include <TTreeReaderArray.h>
 #include <TLeaf.h>
+#include <TLeaf.h>
+#include <ROOT/RDataFrame.hxx>
 
 #include <typeinfo>
 
@@ -33,8 +35,11 @@ inline unsigned int string_hash_cpp(const std::string& str)
 template <typename T>
 class LazyArrayReader {
 public:
-    unordered_map<unsigned int,  unique_ptr<TTreeReaderArray<T>>> reader_cache;
     TTreeReader& reader;
+
+    unordered_map<unsigned int,  unique_ptr<TTreeReaderArray<T>>> reader_cache;
+    //memory-contiguous data from the arrays
+    unordered_map<unsigned int, ROOT::VecOps::RVec<T>> value_cache;
 
     LazyArrayReader(TTreeReader& _reader) : reader(_reader) {}
 
@@ -47,10 +52,19 @@ public:
         }
     }
 
+    void read(const unsigned int& id_hash) {
+        value_cache[id_hash] = ROOT::VecOps::RVec<T>(
+            (*reader_cache.at(id_hash)).begin(),
+            (*reader_cache.at(id_hash)).end()
+        );
+    }
+
     //Gets the value stored in a specific array at a specific index
-    T get(const unsigned int& id_hash, unsigned int idx) const {
-        TTreeReaderArray<T>& val = *reader_cache.at(id_hash);
-        return val[idx];
+    inline T get(const unsigned int& id_hash, unsigned int idx) const {
+
+        //const TTreeReaderArray<T>& val = *reader_cache.at(id_hash);
+        //return (*reader_cache.at(id_hash))[idx];
+        return value_cache.at(id_hash)[idx];
     }
 };
 
@@ -58,7 +72,8 @@ public:
 template <typename T>
 class LazyValueReader {
 public:
-    unordered_map<unsigned int,  unique_ptr<TTreeReaderValue<T>>> reader_cache;
+    unordered_map<unsigned int, unique_ptr<TTreeReaderValue<T>>> reader_cache;
+    unordered_map<unsigned int, T> value_cache;
     TTreeReader& reader;
 
     LazyValueReader(TTreeReader& _reader) : reader(_reader) {}
@@ -71,8 +86,12 @@ public:
         }
     }
 
-    T get(const unsigned int& id_hash) const {
-        return **reader_cache.at(id_hash);
+    void read(const unsigned int& id_hash) {
+        value_cache[id_hash] = **reader_cache.at(id_hash);
+    }
+
+    inline T get(const unsigned int& id_hash) const {
+        return value_cache.at(id_hash);
     }
 };
 
@@ -160,19 +179,19 @@ public:
 class LazyObject {
 public:
 
-    //the index of the object in the object array
-    const unsigned int index;
-
     //the reference to the parent NanoAOD event
     const NanoEvent& event;
 
-    unordered_map<unsigned int, float> userfloats;
+    //the index of the object in the object array
+    const unsigned int index;
+
+    // unordered_map<unsigned int, float> userfloats;
     // mutable unordered_map<unsigned int, float> float_cache;
 
     //Initializes the object based on the event and the index
     LazyObject(const NanoEvent& _event, unsigned int _index) :
-    event(_event), index(_index) {
-    }
+        event(_event), index(_index) { }
+    virtual ~LazyObject() = 0;
 
     // Caching does not seem to be necessary
     // //Retrieves a float from the object 

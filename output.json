@@ -1,15 +1,26 @@
 [
     {
         "analyzer_durations": [
-            2118794087,
-            450590146,
-            13302217134
+            16625080754,
+            580284376,
+            700547294,
+            3557921816,
+            535173664,
+            1444531984
         ],
-        "cpu_time": 27.23,
-        "event_duration": 15053311467,
-        "filename": "file:///Users/joosep/Documents/nano//ttjets_sl/0E0B09D0-6A59-E811-9F00-008CFAFBF576.root",
-        "num_events_processed": 1194865,
-        "real_time": 31.195775985717773,
-        "speed": 38.30214066632097
+        "analyzer_names": [
+            "JetEventAnalyzer",
+            "MuonEventAnalyzer",
+            "ElectronEventAnalyzer",
+            "SumPtAnalyzer",
+            "EventVarsAnalyzer",
+            "TreeAnalyzer"
+        ],
+        "cpu_time": 23.61,
+        "event_duration": 651000313,
+        "filename": "file:///Users/joosep/Documents/caltech/nanoflow/data/16A23AC3-C558-E811-A76E-008CFAC91CA4.root",
+        "num_events_processed": 1081481,
+        "real_time": 24.831335067749023,
+        "speed": 43.55307505816025
     }
 ]

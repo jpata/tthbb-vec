@@ -5,6 +5,7 @@ datasets:
 #  global_file_prefix: root://cms-xrd-global.cern.ch/
   global_file_prefix: file:///mnt/hadoop/
   cache_location: file:///fast
+  workdirectory: ./out/
   use_cache: true
 
   #All the simulation datasets are gathered here

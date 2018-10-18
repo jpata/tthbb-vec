@@ -38,6 +38,7 @@ int main( int argc, char *argv[]) {
       new ElectronEventAnalyzer(*output),
       new SumPtAnalyzer(*output),
       new EventVarsAnalyzer(*output),
+      new LeptonPairAnalyzer(*output),
       new JetDeltaRAnalyzer(*output),
       new TreeAnalyzer(*output)
     };

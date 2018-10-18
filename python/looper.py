@@ -75,12 +75,13 @@ class SequentialAnalysis:
 def run_looper(input_json, output_json):
     an = SequentialAnalysis(input_json) 
 
-    #an.add(ROOT.JetEventAnalyzer(an.output))
+    an.add(ROOT.JetEventAnalyzer(an.output))
     an.add(ROOT.MuonEventAnalyzer(an.output))
-    #an.add(ROOT.ElectronEventAnalyzer(an.output))
-    #an.add(ROOT.SumPtAnalyzer(an.output))
+    an.add(ROOT.ElectronEventAnalyzer(an.output))
+    an.add(ROOT.SumPtAnalyzer(an.output))
     an.add(ROOT.EventVarsAnalyzer(an.output))
-    #an.add(ROOT.LeptonPairAnalyzer(an.output))
+    an.add(ROOT.LeptonPairAnalyzer(an.output))
+    an.add(ROOT.JetDeltaRAnalyzer(an.output))
     an.add(ROOT.MyTreeAnalyzer(an.output))
     
     reports = an.run()
