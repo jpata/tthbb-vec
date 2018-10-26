@@ -6,6 +6,9 @@ LDFLAGS=-L`root-config --libdir` ${LIBS} ${OPTS}
 
 all: bin/looper bin/libnanoflow.so bin/simple_loop
 
+SRC_FILES=src/*.cc
+HEADER_FILES=interface/*.h
+
 clean:
 	rm -Rf bin/*
 
@@ -27,4 +30,6 @@ bin/libnanoflow.so: bin/nanoflow.o bin/myanalyzers.o
 bin/simple_loop: src/simple_loop.cc
 	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
 
+format: ${SRC_FILES} ${HEADER_FILES}
+	clang-format -i -style=Google ${SRC_FILES} ${HEADER_FILES} 
 .PHONY: clean

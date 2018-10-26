@@ -59,7 +59,7 @@ class SequentialAnalysis:
         for inf in self.conf.input_files:
             tf = ROOT.TFile.Open(inf)
             reader = ROOT.TTreeReader("Events", tf)
-            report = looper_main(self.conf, inf, reader, self.output, self.analyzers, -1)
+            report = looper_main(self.conf, inf, reader, self.output, self.analyzers, 100000)
             all_reports.append(report)
 
         self.output.close()
@@ -75,13 +75,18 @@ class SequentialAnalysis:
 def run_looper(input_json, output_json):
     an = SequentialAnalysis(input_json) 
 
-    an.add(ROOT.JetEventAnalyzer(an.output))
     an.add(ROOT.MuonEventAnalyzer(an.output))
-    an.add(ROOT.ElectronEventAnalyzer(an.output))
-    an.add(ROOT.SumPtAnalyzer(an.output))
-    an.add(ROOT.EventVarsAnalyzer(an.output))
-    an.add(ROOT.LeptonPairAnalyzer(an.output))
-    an.add(ROOT.JetDeltaRAnalyzer(an.output))
+    an.add(ROOT.MatrixElementEventAnalyzer(an.output, 13000))
+    #an.add(ROOT.JetEventAnalyzer(an.output))
+    #an.add(ROOT.GenJetEventAnalyzer(an.output))
+    #an.add(ROOT.GenRecoJetMatchAnalyzer(an.output))
+    #an.add(ROOT.ElectronEventAnalyzer(an.output))
+    #an.add(ROOT.GenLeptonEventAnalyzer(an.output))
+    #an.add(ROOT.GenRecoLeptonMatchAnalyzer(an.output))
+    # an.add(ROOT.SumPtAnalyzer(an.output))
+    #an.add(ROOT.EventVarsAnalyzer(an.output))
+    # an.add(ROOT.LeptonPairAnalyzer(an.output))
+    # an.add(ROOT.JetDeltaRAnalyzer(an.output))
     an.add(ROOT.MyTreeAnalyzer(an.output))
     
     reports = an.run()
