@@ -235,6 +235,7 @@ class MatrixElementEventAnalyzer : public Analyzer {
   vector<GenParticle> get_particles_idx(Event& event,
                                         vector<unsigned int>& final_mu_idx);
   void match_muons(Event& event, vector<GenParticle>& gen, vector<Muon>& reco);
+  void count_matched_mu(Event& event, vector<Muon>& reco)
 };
 
 class GenRecoJetPair {
@@ -277,8 +278,9 @@ class GenRecoLeptonMatchAnalyzer : public Analyzer {
 };
 
 // This example Analyzer computes the sum(pt) of all the jets, muons and
-// electrons in the event  and stores it in a histogram. The actual implementation
-// code is located in myanalyzers.cc,  so we can compile it separately.
+// electrons in the event  and stores it in a histogram. The actual
+// implementation code is located in myanalyzers.cc,  so we can compile it
+// separately.
 class SumPtAnalyzer : public Analyzer {
  public:
   Output& output;
@@ -380,9 +382,9 @@ class MyTreeAnalyzer : public TreeAnalyzer {
 
 // This is the main event loop
 // Given a TTreeReader reader, we process all the specified analyzers and store
-// the  output in the Output data structure.  You shouldn't have to add anything to
-// the event loop if you want to compute a new  quantity - rather, you can add a
-// new Analyzer
+// the  output in the Output data structure.  You shouldn't have to add anything
+// to the event loop if you want to compute a new  quantity - rather, you can
+// add a new Analyzer
 FileReport looper_main(const Configuration& config, const string& filename,
                        TTreeReader& reader, Output& output,
                        const vector<Analyzer*>& analyzers,

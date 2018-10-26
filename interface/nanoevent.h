@@ -15,9 +15,9 @@
 using namespace std;
 
 // Compile-time hash function for strings from
-// https://github.com/rioki/rex/blob/master/strex.h#L95  By defining this, we can
-// access members from the map by a string that is known at compile time  without
-// having to do runtime string hashing, meaning the code can be fast.
+// https://github.com/rioki/rex/blob/master/strex.h#L95  By defining this, we
+// can access members from the map by a string that is known at compile time
+// without having to do runtime string hashing, meaning the code can be fast.
 constexpr inline unsigned int string_hash(const char* str, int h = 0) {
   return !str[h] ? 5381 : (string_hash(str, h + 1) * 33) ^ str[h];
 }

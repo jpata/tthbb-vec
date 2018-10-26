@@ -27,8 +27,8 @@ void loop_plain(TTreeReader& reader) {
   const unsigned int nbytes = 0;
 
   // As usual in C++ ROOT, we have to predefine every branch and this can get
-  // annoying, which is why I've developed a simple wrapper  You can find the list
-  // of all branches with description here:
+  // annoying, which is why I've developed a simple wrapper  You can find the
+  // list of all branches with description here:
   // https://cms-nanoaod-integration.web.cern.ch/integration/master/mc94X_doc.html
   TTreeReaderValue<unsigned int> nJet(reader, "nJet");
   TTreeReaderArray<float> Jet_pt(reader, "Jet_pt");
