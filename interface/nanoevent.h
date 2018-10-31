@@ -41,12 +41,12 @@ class LazyArrayReader {
   // Creates the TTreeReaderArray for a specific branch on the heap and stores
   // it in the cache
   void setup(const std::string& id) {
-    const char* tn =
-        static_cast<TLeaf*>(
-            reader.GetTree()->GetBranch(id.c_str())->GetListOfLeaves()->At(0))
-            ->GetTypeName();
+    // const char* tn =
+    //     static_cast<TLeaf*>(
+    //         reader.GetTree()->GetBranch(id.c_str())->GetListOfLeaves()->At(0))
+    //         ->GetTypeName();
+    //cout << "Branch: vector " << tn << " " << id << endl;
     const auto id_hash = string_hash_cpp(id);
-    cout << "Branch: vector " << tn << " " << id << endl;
     if (reader_cache.find(id_hash) == reader_cache.end()) {
       reader_cache[id_hash] =
           make_unique<TTreeReaderArray<T>>(reader, id.c_str());
@@ -77,11 +77,11 @@ class LazyValueReader {
   LazyValueReader(TTreeReader& _reader) : reader(_reader) {}
 
   void setup(const std::string& id) {
-    const char* tn =
-        static_cast<TLeaf*>(
-            reader.GetTree()->GetBranch(id.c_str())->GetListOfLeaves()->At(0))
-            ->GetTypeName();
-    cout << "Branch: " << tn << " " << id << endl;
+    // const char* tn =
+    //     static_cast<TLeaf*>(
+    //         reader.GetTree()->GetBranch(id.c_str())->GetListOfLeaves()->At(0))
+    //         ->GetTypeName();
+    //cout << "Branch: " << tn << " " << id << endl;
     const auto id_hash = string_hash_cpp(id);
     if (reader_cache.find(id_hash) == reader_cache.end()) {
       reader_cache[id_hash] =
@@ -221,10 +221,10 @@ class LazyObject {
     return event->lc_vint.get(string_hash, index);
   }
 
-  virtual float pt() const = 0;
-  virtual float eta() const = 0;
-  virtual float phi() const = 0;
-  virtual float mass() const = 0;
+  virtual double pt() const = 0;
+  virtual double eta() const = 0;
+  virtual double phi() const = 0;
+  virtual double mass() const = 0;
   // Add here getters for other datatypes
 };
 

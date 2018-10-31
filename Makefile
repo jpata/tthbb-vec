@@ -1,8 +1,9 @@
-OPTS=-Wno-unsequenced -fPIC -O2 -Wall
+OPTS=-Wno-unsequenced -fPIC -O3 -Wall
 CFLAGS=`root-config --cflags` ${OPTS} -I./interface/
 LIBS=-lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -pthread -lm -ldl -lROOTDataFrame -lROOTVecOps -rdynamic
-#-lEve -lEG -lGeom -lGed -lCore
-LDFLAGS=-L`root-config --libdir` ${LIBS} ${OPTS}
+LIBS_OL=-lopenloops -lolcommon -lcuttools -lrambo
+LDFLAGS_OL=-L/Users/joosep/Documents/OpenLoops/lib/
+LDFLAGS=-L`root-config --libdir` ${LIBS} ${LDFLAGS_OL} ${LIBS_OL} ${OPTS}
 
 all: bin/looper bin/libnanoflow.so bin/simple_loop
 
@@ -33,6 +34,18 @@ bin/libnanoflow.so: bin/nanoflow.o bin/myanalyzers.o
 bin/simple_loop: src/simple_loop.cc
 	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
 
+bin/ol_example: src/ol_example.cc
+	c++ ${CFLAGS} ${LDFLAGS} src/ol_example.cc -o bin/ol_example
+
 format: ${SRC_FILES} ${HEADER_FILES}
-	clang-format -i -style=Google ${SRC_FILES} ${HEADER_FILES} 
-.PHONY: clean
+	clang-format -i -style=Google ${SRC_FILES} ${HEADER_FILES}
+
+run: runA runB
+
+runA:
+	DYLD_LIBRARY_PATH=/Users/joosep/Documents/OpenLoops/lib ./bin/looper data/ggh_hmumu/input.json out_ggh.json
+
+runB:
+	DYLD_LIBRARY_PATH=/Users/joosep/Documents/OpenLoops/lib ./bin/looper data/dyjets_ll/input.json out_dyjets.json
+
+.PHONY: clean run

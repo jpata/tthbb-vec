@@ -387,6 +387,12 @@ void Event::clear_event() {
   lep2_highest_inv_mass = 0;
   nMuon = 0;
   nMuon_match = 0;
+
+  me_gen_sig = 0.0;
+  me_gen_bkg = 0.0;
+
+  me_reco_sig = 0.0;
+  me_reco_bkg = 0.0;
 }
 
 // In this function we create our event representation
@@ -532,8 +538,8 @@ const string LeptonPairAnalyzer::getName() const {
 
 FileReport looper_main(const Configuration& config, const string& filename,
                        TTreeReader& reader, Output& output,
-                       const vector<Analyzer*>& analyzers,
-                       long long max_events) {
+                       const vector<Analyzer*>& analyzers, long long max_events,
+                       long long reportevery) {
   // Make sure we clear the state of the reader
   reader.Restart();
 
@@ -591,10 +597,15 @@ FileReport looper_main(const Configuration& config, const string& filename,
     }
 
     // Print out a progress report
-    if (nevents % 50000 == 0) {
+    if (nevents % reportevery == 0) {
       const auto elapsed_time = sw.RealTime();
+      const auto speed = nevents / elapsed_time;
+      const auto remaining_events = (reader.GetEntries(true) - nevents);
+      const auto remaining_time = remaining_events / speed;
+
       cout << "Processed " << nevents << "/" << reader.GetEntries(true)
-           << " speed=" << nevents / elapsed_time / 1000.0 << "kHz" << endl;
+           << " speed=" << speed / 1000.0 << "kHz ETA=" << remaining_time << "s"
+           << endl;
       sw.Continue();
     }
     nevents += 1;

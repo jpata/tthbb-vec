@@ -35,14 +35,14 @@ int main(int argc, char* argv[]) {
   // Define the sequence of analyzers you want to run
   // These are defined in the myanalyzers.h/myanalyzers.cc files
   vector<Analyzer*> analyzers = {new MuonEventAnalyzer(*output),
-                                 new MatrixElementEventAnalyzer(*output, 13000),
+                                 new MatrixElementEventAnalyzer(*output, 13000.0),
                                  //      new JetEventAnalyzer(*output),
                                  //      new GenJetEventAnalyzer(*output),
                                  //      new GenRecoJetMatchAnalyzer(*output),
                                  //      new ElectronEventAnalyzer(*output),
                                  //      new SumPtAnalyzer(*output),
                                  //      new EventVarsAnalyzer(*output),
-                                 //      new LeptonPairAnalyzer(*output),
+                                 new LeptonPairAnalyzer(*output),
                                  //      new JetDeltaRAnalyzer(*output),
                                  new MyTreeAnalyzer(*output)};
 
@@ -59,7 +59,7 @@ int main(int argc, char* argv[]) {
     TTreeReader reader("Events", tf);
 
     auto report =
-        looper_main(*conf, input_file, reader, *output, analyzers, 100000);
+        looper_main(*conf, input_file, reader, *output, analyzers, -1, 1000);
     total_report.push_back(report);
     tf->Close();
   }

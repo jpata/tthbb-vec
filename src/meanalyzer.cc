@@ -1,9 +1,11 @@
 #include "myanalyzers.h"
+#include "meanalyzer_defs.h"
 
 MatrixElementEventAnalyzer::MatrixElementEventAnalyzer(Output& _output,
                                                        double _sqrt_s)
-    : output(_output), sqrt_s(_sqrt_s) {
+    : output(_output), sqrt_s(_sqrt_s), memcalc("/Users/joosep/Documents/OpenLoops/") {
   cout << "Creating MatrixElementEventAnalyzer" << endl;
+
 }
 
 void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
@@ -17,7 +19,6 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   event.lc_vfloat.read(string_hash("GenPart_eta"));
   event.lc_vfloat.read(string_hash("GenPart_phi"));
   event.lc_vfloat.read(string_hash("GenPart_mass"));
-
   event.lc_float.read(string_hash("Generator_x1"));
   event.lc_float.read(string_hash("Generator_x2"));
 
@@ -25,8 +26,8 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   const auto x1 = event.lc_float.get(string_hash("Generator_x1"));
   const auto x2 = event.lc_float.get(string_hash("Generator_x2"));
 
-  const auto E1 = sqrt_s / 2.0 * x1;
-  const auto E2 = sqrt_s / 2.0 * x2;
+  const auto E1 = sqrt_s * x1 / 2.0;
+  const auto E2 = sqrt_s * x2 / 2.0;
   const auto pz1 = E1;
   const auto pz2 = -E2;
   vector<int> initial_pdgId;
@@ -40,14 +41,15 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
         event.lc_vint.get(string_hash("GenPart_status"), _nGenPart);
     const auto pdgId =
         event.lc_vint.get(string_hash("GenPart_pdgId"), _nGenPart);
-    const auto pt = event.lc_vfloat.get(string_hash("GenPart_pt"), _nGenPart);
+    // const auto pt = event.lc_vfloat.get(string_hash("GenPart_pt"),
+    // _nGenPart);
 
     // Initial state
     if (status == 21) {
       initial_pdgId.push_back(pdgId);
 
       // intermediate or mediator particle
-    } else if ((status == 62 && (pdgId == 25 || pdgId == 23))) {
+    } else if ((status == 22 && (pdgId == 25 || pdgId == 23))) {
       mediator_idx.push_back(_nGenPart);
       // final state particle
     } else if (status == 1) {
@@ -64,30 +66,41 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
     }
   }
 
-  if (initial_pdgId.size() != 2) {
-    cerr << "Did not have 2 initial state particles: " << initial_pdgId.size()
-         << endl;
-  }
+  assert(initial_pdgId.size() == 2);
 
   event.geninitialstate.push_back(GenParticleInitial(pz1, initial_pdgId.at(0)));
   event.geninitialstate.push_back(GenParticleInitial(pz2, initial_pdgId.at(1)));
 
-  if (mediator_idx.size() != 1) {
-    cerr << "Did not have ==1 mediator particles: " << mediator_idx.size()
-         << endl;
-  } else {
-    event.mediators = get_particles_idx(event, mediator_idx);
-  }
+  TLorentzVector lv1(0, 0, pz1, E1);
+  TLorentzVector lv2(0, 0, pz2, E2);
+
+  event.mediators = get_particles_idx(event, mediator_idx);
 
   event.genfinalstatemuon = get_particles_idx(event, final_mu_idx);
-
   match_muons(event, event.genfinalstatemuon, event.muons);
+
+  if (event.geninitialstate.size() == 2 && event.mediators.size() == 1) {
+    const auto lv_med = -(lv1+lv2);
+    const auto phase_space_point = memcalc.make_phase_space_3(lv1, lv2, lv_med);
+
+    event.me_gen_sig = memcalc.compute_aplitude_ggh(phase_space_point);
+    event.me_gen_bkg = memcalc.compute_aplitude_qqZ(phase_space_point);
+  }
+
+  if (event.muons.size() >= 2) {
+    const auto lv1 = make_lv(event.muons.at(0).pt(), event.muons.at(0).eta(), event.muons.at(0).phi(), event.muons.at(0).mass());
+    const auto lv2 = make_lv(event.muons.at(1).pt(), event.muons.at(1).eta(), event.muons.at(1).phi(), event.muons.at(1).mass());
+    const auto phase_space_point = memcalc.make_phase_space_from_final(lv1, lv2);
+
+    event.me_reco_sig = memcalc.compute_aplitude_ggh(phase_space_point);
+    event.me_reco_bkg = memcalc.compute_aplitude_qqZ(phase_space_point);
+  }  
 }
 
 vector<GenParticle> MatrixElementEventAnalyzer::get_particles_idx(
-    Event& event, vector<unsigned int>& final_mu_idx) {
+    Event& event, vector<unsigned int>& gen_idx) {
   vector<GenParticle> ret;
-  for (auto idx : final_mu_idx) {
+  for (auto idx : gen_idx) {
     GenParticle gp(event.lc_vfloat.get(string_hash("GenPart_pt"), idx),
                    event.lc_vfloat.get(string_hash("GenPart_eta"), idx),
                    event.lc_vfloat.get(string_hash("GenPart_phi"), idx),
@@ -135,7 +148,8 @@ void MatrixElementEventAnalyzer::match_muons(Event& event,
   count_matched_mu(event, reco);
 }
 
-void MatrixElementEventAnalyzer::count_matched_mu(Event& event, vector<Muon>& reco) {
+void MatrixElementEventAnalyzer::count_matched_mu(Event& event,
+                                                  vector<Muon>& reco) {
   for (auto& p : reco) {
     event.nMuon += 1;
     if (p.matchidx != -1) {
@@ -151,6 +165,12 @@ const string MatrixElementEventAnalyzer::getName() const {
 MyTreeAnalyzer::MyTreeAnalyzer(Output& _output) : TreeAnalyzer(_output) {
   out_tree->Branch("lep2_highest_inv_mass", &lep2_highest_inv_mass,
                    "lep2_highest_inv_mass/F");
+
+  out_tree->Branch("me_gen_sig", &me_gen_sig, "me_gen_sig/D");
+  out_tree->Branch("me_gen_bkg", &me_gen_bkg, "me_gen_bkg/D");
+  out_tree->Branch("me_reco_sig", &me_reco_sig, "me_reco_sig/D");
+  out_tree->Branch("me_reco_bkg", &me_reco_bkg, "me_reco_bkg/D");
+
   out_tree->Branch("nMuon", &nMuon, "nMuon/I");
   out_tree->Branch("nMuon_match", &nMuon_match, "nMuon_match/I");
   out_tree->Branch("nGenInitialState", &nGenInitialState, "nGenInitialState/I");
@@ -159,7 +179,7 @@ MyTreeAnalyzer::MyTreeAnalyzer(Output& _output) : TreeAnalyzer(_output) {
   out_tree->Branch("GenInitialState_energy", GenInitialState_energy.data(),
                    "GenInitialState_energy[nGenInitialState]/F");
   out_tree->Branch("GenInitialState_pdgId", GenInitialState_pdgId.data(),
-                   "GenInitialState_pdgId[nGenInitialState]/F");
+                   "GenInitialState_pdgId[nGenInitialState]/I");
 
   out_tree->Branch("nGenMediator", &nGenMediator, "nGenMediator/I");
   out_tree->Branch("GenMediator_px", GenMediator_px.data(),
@@ -199,6 +219,10 @@ void MyTreeAnalyzer::clear() {
   lep2_highest_inv_mass = 0.0;
   nMuon = 0;
   nMuon_match = 0;
+
+  me_gen_sig = 0.0;
+  me_gen_bkg = 0.0;
+
   nGenInitialState = 0;
   GenInitialState_pz.fill(0.0);
   GenInitialState_pdgId.fill(0);
@@ -305,6 +329,12 @@ void MyTreeAnalyzer::analyze(NanoEvent& _event) {
   lep2_highest_inv_mass = event.lep2_highest_inv_mass;
   nMuon = event.nMuon;
   nMuon_match = event.nMuon_match;
+
+  me_gen_sig = event.me_gen_sig;
+  me_gen_bkg = event.me_gen_bkg;
+
+  me_reco_sig = event.me_reco_sig;
+  me_reco_bkg = event.me_reco_bkg;
 
   fill_geninitialstate(event.geninitialstate);
   fill_mediator(event.mediators);

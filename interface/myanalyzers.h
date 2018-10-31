@@ -6,6 +6,7 @@
 #include <TLorentzVector.h>
 
 #include "nanoflow.h"
+#include "meanalyzer.h"
 
 TLorentzVector make_lv(float pt, float eta, float phi, float mass);
 
@@ -16,35 +17,35 @@ TLorentzVector make_lv(float pt, float eta, float phi, float mass);
 
 class Jet : public LazyObject {
  public:
-  const float _pt, _eta, _phi, _mass;
+  const double _pt, _eta, _phi, _mass;
   Jet(NanoEvent* _event, unsigned int _index);
   Jet(Jet&&) = default;
   Jet(const Jet&) = default;
   ~Jet() {}
 
-  inline float pt() const { return _pt; }
+  inline double pt() const { return _pt; }
 
-  inline float eta() const { return _eta; }
+  inline double eta() const { return _eta; }
 
-  inline float phi() const { return _phi; }
+  inline double phi() const { return _phi; }
 
-  inline float mass() const { return _mass; }
+  inline double mass() const { return _mass; }
 };
 
 class GenJet : public LazyObject {
  public:
-  const float _pt, _eta, _phi, _mass;
+  const double _pt, _eta, _phi, _mass;
   const int _partonFlavour;
   GenJet(NanoEvent* _event, unsigned int _index);
   ~GenJet() {}
 
-  inline float pt() const { return _pt; }
+  inline double pt() const { return _pt; }
 
-  inline float eta() const { return _eta; }
+  inline double eta() const { return _eta; }
 
-  inline float phi() const { return _phi; }
+  inline double phi() const { return _phi; }
 
-  inline float mass() const { return _mass; }
+  inline double mass() const { return _mass; }
 
   inline int partonFlavour() const { return _partonFlavour; }
 };
@@ -56,32 +57,32 @@ class GenLepton : public LazyObject {
   GenLepton(NanoEvent* _event, unsigned int _index);
   ~GenLepton() {}
 
-  inline float pt() const { return _pt; }
+  inline double pt() const { return _pt; }
 
-  inline float eta() const { return _eta; }
+  inline double eta() const { return _eta; }
 
-  inline float phi() const { return _phi; }
+  inline double phi() const { return _phi; }
 
-  inline float mass() const { return _mass; }
+  inline double mass() const { return _mass; }
 
   inline int pdgId() const { return _pdgId; }
 };
 
 class Muon : public LazyObject {
  public:
-  float _pt, _eta, _phi, _mass;
+  double _pt, _eta, _phi, _mass;
   int matchidx = -1;
 
   Muon(NanoEvent* _event, unsigned int _index);
   ~Muon() {}
 
-  inline float pt() const { return _pt; }
+  inline double pt() const { return _pt; }
 
-  inline float eta() const { return _eta; }
+  inline double eta() const { return _eta; }
 
-  inline float phi() const { return _phi; }
+  inline double phi() const { return _phi; }
 
-  inline float mass() const { return _mass; }
+  inline double mass() const { return _mass; }
 };
 
 // template <class T> void swap (T& a, T& b)
@@ -91,19 +92,19 @@ class Muon : public LazyObject {
 
 class Electron : public LazyObject {
  public:
-  const float _pt, _eta, _phi, _mass;
+  const double _pt, _eta, _phi, _mass;
   int matchidx = -1;
 
   Electron(NanoEvent* _event, unsigned int _index);
   ~Electron() {}
 
-  inline float pt() const { return _pt; }
+  inline double pt() const { return _pt; }
 
-  inline float eta() const { return _eta; }
+  inline double eta() const { return _eta; }
 
-  inline float phi() const { return _phi; }
+  inline double phi() const { return _phi; }
 
-  inline float mass() const { return _mass; }
+  inline double mass() const { return _mass; }
 };
 
 class GenParticle {
@@ -167,6 +168,11 @@ class Event : public NanoEvent {
   int nMuon;
   int nMuon_match;
 
+  double me_gen_sig;
+  double me_gen_bkg;
+  double me_reco_sig;
+  double me_reco_bkg;
+
   Event(TTreeReader& _reader, const Configuration& _config);
 
   // This is very important to make sure that we always start with a clean
@@ -229,13 +235,15 @@ class MatrixElementEventAnalyzer : public Analyzer {
   Output& output;
   double sqrt_s;
 
+  MatrixElementHiggsMuMu memcalc;
+
   MatrixElementEventAnalyzer(Output& _output, double _sqrt_s);
   virtual void analyze(NanoEvent& _event) override;
   virtual const string getName() const override;
   vector<GenParticle> get_particles_idx(Event& event,
                                         vector<unsigned int>& final_mu_idx);
   void match_muons(Event& event, vector<GenParticle>& gen, vector<Muon>& reco);
-  void count_matched_mu(Event& event, vector<Muon>& reco)
+  void count_matched_mu(Event& event, vector<Muon>& reco);
 };
 
 class GenRecoJetPair {
@@ -342,6 +350,10 @@ class MyTreeAnalyzer : public TreeAnalyzer {
  public:
   float lep2_highest_inv_mass;
   int nMuon_match;
+  double me_gen_sig;
+  double me_gen_bkg;
+  double me_reco_sig;
+  double me_reco_bkg;
 
   int nGenInitialState;
   array<float, 2> GenInitialState_pz;
@@ -387,7 +399,7 @@ class MyTreeAnalyzer : public TreeAnalyzer {
 // add a new Analyzer
 FileReport looper_main(const Configuration& config, const string& filename,
                        TTreeReader& reader, Output& output,
-                       const vector<Analyzer*>& analyzers,
-                       long long max_events);
+                       const vector<Analyzer*>& analyzers, long long max_events,
+                       long long reportevery);
 
 #endif
