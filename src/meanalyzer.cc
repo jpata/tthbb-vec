@@ -90,30 +90,20 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
 
     auto total = i1_gen + i2_gen - (mu1 + mu2);
 
-    const auto phase_space_point = memcalc.make_phase_space_4_lv(i1_gen, i2_gen, mu1, mu2);
+    auto mevalues = memcalc.compute_me_initial_final_mumu(i1_gen, i2_gen, mu1, mu2);
 
-    event.me_gen_sig = memcalc.compute_aplitude_gghmumu(phase_space_point);
-    event.me_gen_bkg = memcalc.compute_aplitude_qqZmumu(phase_space_point);
+    event.me_gen_sig = mevalues.ggh_hmumu;
+    event.me_gen_bkg = mevalues.qqz_zmumu;
   }
 
    if (event.muons.size() >= 2) {
      auto mu1 = make_lv(event.muons.at(0).pt(), event.muons.at(0).eta(), event.muons.at(0).phi(), event.muons.at(0).mass());
      auto mu2 = make_lv(event.muons.at(1).pt(), event.muons.at(1).eta(), event.muons.at(1).phi(), event.muons.at(1).mass());
-     auto total_fs = mu1+mu2;
-     auto boost_beta = -TVector3(total_fs.Px()/total_fs.E(), total_fs.Py()/total_fs.E(), 0.0);
-     mu1.Boost(boost_beta);
-     mu2.Boost(boost_beta);
-     total_fs = mu1+mu2;
+     
+     auto mevalues = memcalc.compute_me_final_mumu(mu1, mu2);
 
-     const auto E = total_fs.E();
-     const auto pz = total_fs.Pz();
-     TLorentzVector i1_reco(0, 0, (E+pz)/2.0, (E+pz)/2.0);
-     TLorentzVector i2_reco(0, 0, -(E-pz)/2.0, (E-pz)/2.0);
-
-     const auto phase_space_point = memcalc.make_phase_space_4_lv(i1_reco, i2_reco, mu1, mu2);
-
-     event.me_reco_sig = memcalc.compute_aplitude_gghmumu(phase_space_point);
-     event.me_reco_bkg = memcalc.compute_aplitude_qqZmumu(phase_space_point);
+     event.me_reco_sig = mevalues.ggh_hmumu;
+     event.me_reco_bkg = mevalues.qqz_zmumu;
    }
 }
 

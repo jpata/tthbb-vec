@@ -1,4 +1,4 @@
-OPTS=-Wno-unsequenced -fPIC -Wall
+OPTS=-Wno-unsequenced -fPIC -Wall -O3
 LIBS=-lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -pthread -lm -ldl -lROOTDataFrame -lROOTVecOps -rdynamic
 
 #linking to madgraph
