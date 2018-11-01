@@ -41,6 +41,9 @@ bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so bin/libamp_hmm.so
 bin/simple_loop: src/simple_loop.cc
 	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
 
+bin/df: src/dataframe.cc
+	c++ ${CFLAGS} ${LDFLAGS} src/dataframe.cc -o bin/df
+
 #misc
 format: ${SRC_FILES} ${HEADER_FILES}
 	clang-format -i -style=Google ${SRC_FILES} ${HEADER_FILES}
