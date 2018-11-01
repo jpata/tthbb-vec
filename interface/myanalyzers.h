@@ -6,7 +6,7 @@
 #include <TLorentzVector.h>
 
 #include "nanoflow.h"
-#include "meanalyzer.h"
+#include "me_hmumu.h"
 
 TLorentzVector make_lv(float pt, float eta, float phi, float mass);
 
@@ -237,7 +237,7 @@ class MatrixElementEventAnalyzer : public Analyzer {
 
   MatrixElementHiggsMuMu memcalc;
 
-  MatrixElementEventAnalyzer(Output& _output, double _sqrt_s);
+  MatrixElementEventAnalyzer(Output& _output, double _sqrt_s, string mg_card_path);
   virtual void analyze(NanoEvent& _event) override;
   virtual const string getName() const override;
   vector<GenParticle> get_particles_idx(Event& event,

@@ -1,44 +1,52 @@
-OPTS=-Wno-unsequenced -fPIC -O3 -Wall
-CFLAGS=`root-config --cflags` ${OPTS} -I./interface/
+OPTS=-Wno-unsequenced -fPIC -Wall
 LIBS=-lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -pthread -lm -ldl -lROOTDataFrame -lROOTVecOps -rdynamic
-LIBS_OL=-lopenloops -lolcommon -lcuttools -lrambo
-LDFLAGS_OL=-L/Users/joosep/Documents/OpenLoops/lib/
-LDFLAGS=-L`root-config --libdir` ${LIBS} ${LDFLAGS_OL} ${LIBS_OL} ${OPTS}
 
-all: bin/looper bin/libnanoflow.so bin/simple_loop
+#linking to madgraph
+LDFLAGS_MG=-L./bin/ -lamp_hmm
+CFLAGS_MG=-I./src/madgraph
 
-SRC_FILES=src/*.cc
-HEADER_FILES=interface/*.h
+#final compiler and linker flags
+ROOT_CFLAGS=`root-config --cflags`
+ROOT_LIBDIR=`root-config --libdir`
+CFLAGS=${ROOT_CFLAGS} ${OPTS} -I./interface/ ${CFLAGS_MG}
+LDFLAGS=-L${ROOT_LIBDIR} ${LIBS} ${OPTS}
 
-clean:
-	rm -Rf bin/*
+LDFLAGS_LOOPER=${LDFLAGS_MG}
 
-bin/nanoflow.o: src/nanoflow.cc interface/nanoflow.h interface/nanoevent.h
-	c++ ${CFLAGS} -c src/nanoflow.cc -o bin/nanoflow.o
+#list of all objects for libraries
+LIBAMP_HMM_DEPS = bin/rambo.o bin/read_slha.o bin/ProcessGGH.o bin/ProcessQQZ.o bin/Parameters_sm__hgg_plugin_full.o bin/HelAmps_sm__hgg_plugin_full.o
+LIBNANOFLOW_DEPS = bin/nanoflow.o
+LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o bin/me_hmumu.o
 
-bin/myanalyzers.o: src/myanalyzers.cc interface/myanalyzers.h
-	c++ ${CFLAGS} -c src/myanalyzers.cc -o bin/myanalyzers.o
+all: bin/looper bin/libnanoflow.so bin/libamp_hmm.so bin/simple_loop
 
-bin/meanalyzer.o: src/meanalyzer.cc interface/myanalyzers.h
-	c++ ${CFLAGS} -c src/meanalyzer.cc -o bin/meanalyzer.o
+#objects
+bin/%.o: src/madgraph/%.cc
+	$(CXX) -c $(CFLAGS) $< -o $@
 
-bin/looper.o: src/looper.cc interface/myanalyzers.h
-	c++ ${CFLAGS} -c src/looper.cc -o bin/looper.o
+bin/%.o: src/%.cc
+	$(CXX) -c $(CFLAGS) $< -o $@
 
-bin/looper: bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o
-	c++ ${LDFLAGS} bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o -o bin/looper
+#libraries
+bin/libamp_hmm.so: $(LIBAMP_HMM_DEPS)
+	$(CXX) -I./src/madgraph $(LIBAMP_HMM_DEPS) -shared -o $@
 
-bin/libnanoflow.so: bin/nanoflow.o bin/myanalyzers.o
-	c++ ${CFLAGS} ${LDFLAGS} bin/nanoflow.o bin/myanalyzers.o -shared -o bin/libnanoflow.so
+bin/libnanoflow.so: $(LIBNANOFLOW_DEPS)
+	c++ ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o bin/libnanoflow.so
+
+#executables
+bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so bin/libamp_hmm.so
+	c++ ${LDFLAGS} ${LDFLAGS_LOOPER} $(LOOPER_DEPS) -o bin/looper
 
 bin/simple_loop: src/simple_loop.cc
 	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
 
-bin/ol_example: src/ol_example.cc
-	c++ ${CFLAGS} ${LDFLAGS} src/ol_example.cc -o bin/ol_example
-
+#misc
 format: ${SRC_FILES} ${HEADER_FILES}
 	clang-format -i -style=Google ${SRC_FILES} ${HEADER_FILES}
+
+clean:
+	rm -Rf bin/*
 
 run: runA runB
 

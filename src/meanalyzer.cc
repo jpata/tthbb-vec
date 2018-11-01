@@ -1,9 +1,8 @@
 #include "myanalyzers.h"
-#include "meanalyzer_defs.h"
 
 MatrixElementEventAnalyzer::MatrixElementEventAnalyzer(Output& _output,
-                                                       double _sqrt_s)
-    : output(_output), sqrt_s(_sqrt_s), memcalc("/Users/joosep/Documents/OpenLoops/") {
+                                                       double _sqrt_s, string mg_card_path)
+    : output(_output), sqrt_s(_sqrt_s), memcalc(mg_card_path) {
   cout << "Creating MatrixElementEventAnalyzer" << endl;
 
 }
@@ -71,30 +70,51 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   event.geninitialstate.push_back(GenParticleInitial(pz1, initial_pdgId.at(0)));
   event.geninitialstate.push_back(GenParticleInitial(pz2, initial_pdgId.at(1)));
 
-  TLorentzVector lv1(0, 0, pz1, E1);
-  TLorentzVector lv2(0, 0, pz2, E2);
+  TLorentzVector i1_gen(0, 0, pz1, E1);
+  TLorentzVector i2_gen(0, 0, pz2, E2);
 
   event.mediators = get_particles_idx(event, mediator_idx);
 
   event.genfinalstatemuon = get_particles_idx(event, final_mu_idx);
   match_muons(event, event.genfinalstatemuon, event.muons);
 
-  if (event.geninitialstate.size() == 2 && event.mediators.size() == 1) {
-    const auto lv_med = -(lv1+lv2);
-    const auto phase_space_point = memcalc.make_phase_space_3(lv1, lv2, lv_med);
+  if (event.geninitialstate.size() == 2 && event.genfinalstatemuon.size() == 2) {
+    
+    TLorentzVector mu1 = make_lv(event.genfinalstatemuon.at(0).pt(), event.genfinalstatemuon.at(0).eta(), event.genfinalstatemuon.at(0).phi(), event.genfinalstatemuon.at(0).mass());
+    TLorentzVector mu2 = make_lv(event.genfinalstatemuon.at(1).pt(), event.genfinalstatemuon.at(1).eta(), event.genfinalstatemuon.at(1).phi(), event.genfinalstatemuon.at(1).mass());
 
-    event.me_gen_sig = memcalc.compute_aplitude_ggh(phase_space_point);
-    event.me_gen_bkg = memcalc.compute_aplitude_qqZ(phase_space_point);
+    auto total_fs = mu1+mu2;
+    auto boost_beta = -TVector3(total_fs.Px()/total_fs.E(), total_fs.Py()/total_fs.E(), 0.0);
+    mu1.Boost(boost_beta);
+    mu2.Boost(boost_beta);
+
+    auto total = i1_gen + i2_gen - (mu1 + mu2);
+
+    const auto phase_space_point = memcalc.make_phase_space_4_lv(i1_gen, i2_gen, mu1, mu2);
+
+    event.me_gen_sig = memcalc.compute_aplitude_gghmumu(phase_space_point);
+    event.me_gen_bkg = memcalc.compute_aplitude_qqZmumu(phase_space_point);
   }
 
-  if (event.muons.size() >= 2) {
-    const auto lv1 = make_lv(event.muons.at(0).pt(), event.muons.at(0).eta(), event.muons.at(0).phi(), event.muons.at(0).mass());
-    const auto lv2 = make_lv(event.muons.at(1).pt(), event.muons.at(1).eta(), event.muons.at(1).phi(), event.muons.at(1).mass());
-    const auto phase_space_point = memcalc.make_phase_space_from_final(lv1, lv2);
+   if (event.muons.size() >= 2) {
+     auto mu1 = make_lv(event.muons.at(0).pt(), event.muons.at(0).eta(), event.muons.at(0).phi(), event.muons.at(0).mass());
+     auto mu2 = make_lv(event.muons.at(1).pt(), event.muons.at(1).eta(), event.muons.at(1).phi(), event.muons.at(1).mass());
+     auto total_fs = mu1+mu2;
+     auto boost_beta = -TVector3(total_fs.Px()/total_fs.E(), total_fs.Py()/total_fs.E(), 0.0);
+     mu1.Boost(boost_beta);
+     mu2.Boost(boost_beta);
+     total_fs = mu1+mu2;
 
-    event.me_reco_sig = memcalc.compute_aplitude_ggh(phase_space_point);
-    event.me_reco_bkg = memcalc.compute_aplitude_qqZ(phase_space_point);
-  }  
+     const auto E = total_fs.E();
+     const auto pz = total_fs.Pz();
+     TLorentzVector i1_reco(0, 0, (E+pz)/2.0, (E+pz)/2.0);
+     TLorentzVector i2_reco(0, 0, -(E-pz)/2.0, (E-pz)/2.0);
+
+     const auto phase_space_point = memcalc.make_phase_space_4_lv(i1_reco, i2_reco, mu1, mu2);
+
+     event.me_reco_sig = memcalc.compute_aplitude_gghmumu(phase_space_point);
+     event.me_reco_bkg = memcalc.compute_aplitude_qqZmumu(phase_space_point);
+   }
 }
 
 vector<GenParticle> MatrixElementEventAnalyzer::get_particles_idx(

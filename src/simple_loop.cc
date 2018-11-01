@@ -24,7 +24,7 @@ void loop_plain(TTreeReader& reader) {
 
   TStopwatch sw;
 
-  const unsigned int nbytes = 0;
+  //const unsigned int nbytes = 0;
 
   // As usual in C++ ROOT, we have to predefine every branch and this can get
   // annoying, which is why I've developed a simple wrapper  You can find the
@@ -49,9 +49,9 @@ void loop_plain(TTreeReader& reader) {
     for (unsigned int _nJet = 0; _nJet < *nJet; _nJet++) {
       // Arrays can be accessed like this
       const auto pt = Jet_pt[_nJet];
-      const auto eta = Jet_eta[_nJet];
-      const auto phi = Jet_phi[_nJet];
-      const auto mass = Jet_mass[_nJet];
+      // const auto eta = Jet_eta[_nJet];
+      // const auto phi = Jet_phi[_nJet];
+      // const auto mass = Jet_mass[_nJet];
       sum_pt += pt;
     }
     h_sumpt.Fill(sum_pt);
