@@ -1,4 +1,4 @@
-OPTS=-Wno-unsequenced -fPIC -Wall
+OPTS=-Wno-unsequenced -fPIC -Wall -O3
 LIBS=-lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lMultiProc -pthread -lm -ldl -lROOTDataFrame -lROOTVecOps -rdynamic
 
 #linking to madgraph
@@ -14,9 +14,9 @@ LDFLAGS=-L${ROOT_LIBDIR} ${LIBS} ${OPTS}
 LDFLAGS_LOOPER=${LDFLAGS_MG}
 
 #list of all objects for libraries
-LIBAMP_HMM_DEPS = bin/rambo.o bin/read_slha.o bin/ProcessGGH.o bin/ProcessQQZ.o bin/Parameters_sm__hgg_plugin_full.o bin/HelAmps_sm__hgg_plugin_full.o
+LIBAMP_HMM_DEPS = bin/me_hmumu.o bin/rambo.o bin/read_slha.o bin/ProcessGGH.o bin/ProcessQQZ.o bin/Parameters_sm__hgg_plugin_full.o bin/HelAmps_sm__hgg_plugin_full.o
 LIBNANOFLOW_DEPS = bin/nanoflow.o
-LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o bin/me_hmumu.o
+LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o
 
 all: bin/looper bin/libnanoflow.so bin/libamp_hmm.so bin/simple_loop
 
@@ -29,17 +29,17 @@ bin/%.o: src/%.cc
 
 #libraries
 bin/libamp_hmm.so: $(LIBAMP_HMM_DEPS)
-	$(CXX) -I./src/madgraph $(LIBAMP_HMM_DEPS) -shared -o $@
+	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBAMP_HMM_DEPS) -shared -o $@
 
 bin/libnanoflow.so: $(LIBNANOFLOW_DEPS)
-	c++ ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o bin/libnanoflow.so
+	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o bin/libnanoflow.so
 
 #executables
 bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so bin/libamp_hmm.so
-	c++ ${LDFLAGS} ${LDFLAGS_LOOPER} $(LOOPER_DEPS) -o bin/looper
+	$(CXX) ${LDFLAGS} ${LDFLAGS_LOOPER} $(LOOPER_DEPS) -o bin/looper
 
 bin/simple_loop: src/simple_loop.cc
-	c++ ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
+	$(CXX) ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
 
 bin/df: src/dataframe.cc
 	c++ ${CFLAGS} ${LDFLAGS} src/dataframe.cc -o bin/df

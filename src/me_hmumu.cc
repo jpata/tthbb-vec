@@ -5,6 +5,35 @@ MatrixElementHiggsMuMu::MatrixElementHiggsMuMu(string mg_card_path) {
   proc_ggh.initProc(mg_card_path.c_str());
 }
 
+MEValues MatrixElementHiggsMuMu::compute_me_final_mumu(TLorentzVector f1, TLorentzVector f2) {
+  auto total_fs = f1 + f2;
+  auto boost_beta = -TVector3(total_fs.Px()/total_fs.E(), total_fs.Py()/total_fs.E(), 0.0);
+  f1.Boost(boost_beta);
+  f2.Boost(boost_beta);
+  total_fs = f1 + f2;
+
+  const auto E = total_fs.E();
+  const auto pz = total_fs.Pz();
+  TLorentzVector i1_reco(0, 0, (E + pz) / 2.0, (E + pz) / 2.0);
+  TLorentzVector i2_reco(0, 0, -(E - pz) / 2.0, (E - pz) / 2.0);
+
+  const auto phase_space_point = make_phase_space_4_lv(i1_reco, i2_reco, f1, f2);
+
+  MEValues ret;
+  ret.ggh_hmumu = compute_aplitude_gghmumu(phase_space_point);
+  ret.qqz_zmumu = compute_aplitude_qqZmumu(phase_space_point);
+  return ret;
+}
+
+MEValues MatrixElementHiggsMuMu::compute_me_initial_final_mumu(TLorentzVector i1, TLorentzVector i2, TLorentzVector f1, TLorentzVector f2) {
+  const auto phase_space_point = make_phase_space_4_lv(i1, i2, f1, f2);
+  MEValues ret;
+  ret.ggh_hmumu = compute_aplitude_gghmumu(phase_space_point);
+  ret.qqz_zmumu = compute_aplitude_qqZmumu(phase_space_point);
+  return ret;
+}
+
+
 MatrixElementHiggsMuMu::pspoint MatrixElementHiggsMuMu::make_phase_space_4(
     MatrixElementHiggsMuMu::p4 i1, MatrixElementHiggsMuMu::p4 i2, MatrixElementHiggsMuMu::p4 f1, MatrixElementHiggsMuMu::p4 f2) {
   array<double, MatrixElementHiggsMuMu::num_external*MatrixElementHiggsMuMu::num_p4> phase_space_point;
