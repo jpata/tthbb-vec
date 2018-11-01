@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
   // Define the sequence of analyzers you want to run
   // These are defined in the myanalyzers.h/myanalyzers.cc files
   vector<Analyzer*> analyzers = {new MuonEventAnalyzer(*output),
-                                 new MatrixElementEventAnalyzer(*output, 13000.0, "/Users/joosep/Downloads/MG5_aMC_v2_6_3_2/OUT_hmumu/Cards/param_card.dat"),
+                                 new MatrixElementEventAnalyzer(*output, 13000.0, "data/param_card.dat"),
                                  //      new JetEventAnalyzer(*output),
                                  //      new GenJetEventAnalyzer(*output),
                                  //      new GenRecoJetMatchAnalyzer(*output),
