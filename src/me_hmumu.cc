@@ -1,8 +1,31 @@
 #include "me_hmumu.h"
 
+using namespace std;
+
 MatrixElementHiggsMuMu::MatrixElementHiggsMuMu(string mg_card_path) {
   proc_qqz.initProc(mg_card_path.c_str());
   proc_ggh.initProc(mg_card_path.c_str());
+
+  calibration_file = make_unique<TFile>("data/mem_calibration.root");
+  ggh_pdf_logpz = (TH1D*)(*calibration_file).Get("ggh_pdf_logpz");
+  qqZ_pdf_logpz = (TH1D*)(*calibration_file).Get("qqz_pdf_logpz");
+  assert(ggh_pdf_logpz != nullptr);
+  assert(qqZ_pdf_logpz != nullptr);
+}
+
+double MatrixElementHiggsMuMu::compute_me_final_mumu_hypo(TLorentzVector total_fs, TLorentzVector f1, TLorentzVector f2, TH1D* h_logpz, function<double(MatrixElementHiggsMuMu::pspoint)> compute_amplitude) {
+  const auto E = total_fs.E();
+  const auto pz = total_fs.Pz();
+
+  const auto pz_i1 = exp(h_logpz->GetRandom());
+  const auto pz_i2 = pz - pz_i1;
+
+  TLorentzVector i1_reco(0, 0, pz_i1, abs(pz_i1));
+  TLorentzVector i2_reco(0, 0, pz_i2, abs(pz_i2));
+
+  const auto phase_space_point = make_phase_space_4_lv(i1_reco, i2_reco, f1, f2);
+  double amp = compute_amplitude(phase_space_point);
+  return amp;
 }
 
 MEValues MatrixElementHiggsMuMu::compute_me_final_mumu(TLorentzVector f1, TLorentzVector f2) {
@@ -12,16 +35,10 @@ MEValues MatrixElementHiggsMuMu::compute_me_final_mumu(TLorentzVector f1, TLoren
   f2.Boost(boost_beta);
   total_fs = f1 + f2;
 
-  const auto E = total_fs.E();
-  const auto pz = total_fs.Pz();
-  TLorentzVector i1_reco(0, 0, (E + pz) / 2.0, (E + pz) / 2.0);
-  TLorentzVector i2_reco(0, 0, -(E - pz) / 2.0, (E - pz) / 2.0);
+  MEValues ret;  
 
-  const auto phase_space_point = make_phase_space_4_lv(i1_reco, i2_reco, f1, f2);
-
-  MEValues ret;
-  ret.ggh_hmumu = compute_aplitude_gghmumu(phase_space_point);
-  ret.qqz_zmumu = compute_aplitude_qqZmumu(phase_space_point);
+  ret.ggh_hmumu = compute_me_final_mumu_hypo(total_fs, f1, f2, ggh_pdf_logpz, [this](MatrixElementHiggsMuMu::pspoint ps){ return this->compute_aplitude_gghmumu(ps); });
+  ret.qqz_zmumu = compute_me_final_mumu_hypo(total_fs, f1, f2, qqZ_pdf_logpz, [this](MatrixElementHiggsMuMu::pspoint ps){ return this->compute_aplitude_qqZmumu(ps); });
   return ret;
 }
 
