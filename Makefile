@@ -6,7 +6,7 @@ LDFLAGS_MG=-L./bin/ -lamp_hmm
 CFLAGS_MG=-I./src/madgraph
 
 #final compiler and linker flags
-ROOT_CFLAGS=`root-config --cflags` -std=c++14
+ROOT_CFLAGS=`root-config --cflags` -std=c++11
 ROOT_LIBDIR=`root-config --libdir`
 CFLAGS=${ROOT_CFLAGS} ${OPTS} -I./interface/ ${CFLAGS_MG}
 LDFLAGS=-L${ROOT_LIBDIR} ${LIBS} ${OPTS}
