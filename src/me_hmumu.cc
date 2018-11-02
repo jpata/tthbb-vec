@@ -40,6 +40,7 @@ MEValues MatrixElementHiggsMuMu::compute_me_final_mumu(TLorentzVector f1, TLoren
 
   ret.ggh_hmumu = compute_me_final_mumu_hypo(total_fs, f1, f2, ggh_pdf_logpz, [this](MatrixElementHiggsMuMu::pspoint ps){ return this->compute_aplitude_gghmumu(ps); });
   ret.qqz_zmumu = compute_me_final_mumu_hypo(total_fs, f1, f2, qqZ_pdf_logpz, [this](MatrixElementHiggsMuMu::pspoint ps){ return this->compute_aplitude_qqZmumu(ps); });
+  ret.reco_fs_pz = total_fs.Pz();
   return ret;
 }
 

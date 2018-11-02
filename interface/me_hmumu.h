@@ -26,6 +26,7 @@ using namespace std;
 struct MEValues {
   double ggh_hmumu;
   double qqz_zmumu;
+  double reco_fs_pz;
 };
 
 class MatrixElementHiggsMuMu {

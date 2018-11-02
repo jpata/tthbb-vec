@@ -393,6 +393,8 @@ void Event::clear_event() {
 
   me_reco_sig = 0.0;
   me_reco_bkg = 0.0;
+
+  reco_fs_pz = 0.0;
 }
 
 // In this function we create our event representation

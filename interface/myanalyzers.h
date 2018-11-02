@@ -172,6 +172,7 @@ class Event : public NanoEvent {
   double me_gen_bkg;
   double me_reco_sig;
   double me_reco_bkg;
+  double reco_fs_pz;
 
   Event(TTreeReader& _reader, const Configuration& _config);
 
@@ -354,7 +355,8 @@ class MyTreeAnalyzer : public TreeAnalyzer {
   double me_gen_bkg;
   double me_reco_sig;
   double me_reco_bkg;
-
+  double reco_fs_pz;
+  
   int nGenInitialState;
   array<float, 2> GenInitialState_pz;
   array<float, 2> GenInitialState_energy;

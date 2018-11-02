@@ -73,11 +73,6 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   TLorentzVector i1_gen(0, 0, pz1, E1);
   TLorentzVector i2_gen(0, 0, pz2, E2);
 
-  auto lv_is = i1_gen + i2_gen;
-  auto alpha1 = pz1/lv_is.E();
-  auto alpha2 = pz2/lv_is.E();
-  auto alpha = alpha1 + alpha2;
-
   event.mediators = get_particles_idx(event, mediator_idx);
 
   event.genfinalstatemuon = get_particles_idx(event, final_mu_idx);
@@ -109,6 +104,7 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
 
      event.me_reco_sig = mevalues.ggh_hmumu;
      event.me_reco_bkg = mevalues.qqz_zmumu;
+     event.reco_fs_pz = mevalues.reco_fs_pz;
    }
 }
 
@@ -186,6 +182,8 @@ MyTreeAnalyzer::MyTreeAnalyzer(Output& _output) : TreeAnalyzer(_output) {
   out_tree->Branch("me_reco_sig", &me_reco_sig, "me_reco_sig/D");
   out_tree->Branch("me_reco_bkg", &me_reco_bkg, "me_reco_bkg/D");
 
+  out_tree->Branch("reco_fs_pz", &reco_fs_pz, "reco_fs_pz/D");
+
   out_tree->Branch("nMuon", &nMuon, "nMuon/I");
   out_tree->Branch("nMuon_match", &nMuon_match, "nMuon_match/I");
   out_tree->Branch("nGenInitialState", &nGenInitialState, "nGenInitialState/I");
@@ -237,6 +235,11 @@ void MyTreeAnalyzer::clear() {
 
   me_gen_sig = 0.0;
   me_gen_bkg = 0.0;
+
+  me_reco_sig = 0.0;
+  me_reco_bkg = 0.0;
+
+  reco_fs_pz = 0.0;
 
   nGenInitialState = 0;
   GenInitialState_pz.fill(0.0);
@@ -350,6 +353,8 @@ void MyTreeAnalyzer::analyze(NanoEvent& _event) {
 
   me_reco_sig = event.me_reco_sig;
   me_reco_bkg = event.me_reco_bkg;
+
+  reco_fs_pz = event.reco_fs_pz;
 
   fill_geninitialstate(event.geninitialstate);
   fill_mediator(event.mediators);
