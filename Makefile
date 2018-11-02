@@ -18,7 +18,7 @@ LIBAMP_HMM_DEPS = bin/me_hmumu.o bin/rambo.o bin/read_slha.o bin/ProcessGGH.o bi
 LIBNANOFLOW_DEPS = bin/nanoflow.o
 LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o
 
-all: bin/looper bin/libnanoflow.so bin/libamp_hmm.so bin/simple_loop
+all: bin/looper bin/libnanoflow.so bin/libamp_hmm.so bin/simple_loop bin/df
 
 #objects
 bin/%.o: src/madgraph/%.cc
@@ -40,6 +40,9 @@ bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so bin/libamp_hmm.so
 
 bin/simple_loop: src/simple_loop.cc
 	$(CXX) ${CFLAGS} ${LDFLAGS} src/simple_loop.cc -o bin/simple_loop
+
+bin/df: src/dataframe.cc
+	c++ ${CFLAGS} ${LDFLAGS} src/dataframe.cc -o bin/df
 
 #misc
 format: ${SRC_FILES} ${HEADER_FILES}

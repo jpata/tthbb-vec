@@ -313,7 +313,7 @@ if __name__ == "__main__":
         analysis.remove_jobfiles()
 
     if args.create_jobfiles:
-        analysis.create_jobfiles(10)
+        analysis.create_jobfiles(1)
     
     if args.run_jobs:
         analysis.run_jobs()

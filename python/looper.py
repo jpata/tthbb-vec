@@ -16,6 +16,7 @@ def load_lib(path):
 
 def setup_nanoflow():
     ROOT.gROOT.ProcessLine('.include interface')
+    ROOT.gROOT.ProcessLine('.include src/madgraph')
    
     load_header("nanoflow.h") 
     load_header("myanalyzers.h") 
