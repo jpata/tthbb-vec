@@ -73,6 +73,11 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   TLorentzVector i1_gen(0, 0, pz1, E1);
   TLorentzVector i2_gen(0, 0, pz2, E2);
 
+  auto lv_is = i1_gen + i2_gen;
+  auto alpha1 = pz1/lv_is.E();
+  auto alpha2 = pz2/lv_is.E();
+  auto alpha = alpha1 + alpha2;
+
   event.mediators = get_particles_idx(event, mediator_idx);
 
   event.genfinalstatemuon = get_particles_idx(event, final_mu_idx);
