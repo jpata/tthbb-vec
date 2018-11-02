@@ -2,11 +2,11 @@
 
 using namespace std;
 
-MatrixElementHiggsMuMu::MatrixElementHiggsMuMu(string mg_card_path) {
+MatrixElementHiggsMuMu::MatrixElementHiggsMuMu(string mg_card_path) : calibration_file(new TFile("data/mem_calibration.root"))
+{
   proc_qqz.initProc(mg_card_path.c_str());
   proc_ggh.initProc(mg_card_path.c_str());
 
-  calibration_file = make_unique<TFile>("data/mem_calibration.root");
   ggh_pdf_logpz = (TH1D*)(*calibration_file).Get("ggh_pdf_logpz");
   qqZ_pdf_logpz = (TH1D*)(*calibration_file).Get("qqz_pdf_logpz");
   assert(ggh_pdf_logpz != nullptr);
@@ -16,8 +16,9 @@ MatrixElementHiggsMuMu::MatrixElementHiggsMuMu(string mg_card_path) {
 double MatrixElementHiggsMuMu::compute_me_final_mumu_hypo(TLorentzVector total_fs, TLorentzVector f1, TLorentzVector f2, TH1D* h_logpz, function<double(MatrixElementHiggsMuMu::pspoint)> compute_amplitude) {
   const auto E = total_fs.E();
   const auto pz = total_fs.Pz();
-
-  const auto pz_i1 = exp(h_logpz->GetRandom());
+  
+  const auto rnd = h_logpz->GetRandom();
+  const auto pz_i1 = exp(rnd);
   const auto pz_i2 = pz - pz_i1;
 
   TLorentzVector i1_reco(0, 0, pz_i1, abs(pz_i1));
