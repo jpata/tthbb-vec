@@ -64,6 +64,11 @@ class LazyArrayReader {
     // return (*reader_cache.at(id_hash))[idx];
     return value_cache.at(id_hash)[idx];
   }
+
+  // Gets the full vector
+  inline ROOT::VecOps::RVec<T> get_vec(const unsigned int& id_hash) const {
+    return value_cache.at(id_hash);
+  }
 };
 
 // Wraps numbers (values) of a specific type from a TTree to TTreeReaderValue-s

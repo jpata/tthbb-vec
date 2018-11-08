@@ -7,6 +7,21 @@ MatrixElementEventAnalyzer::MatrixElementEventAnalyzer(Output& _output,
 
 }
 
+bool has_mother(const ROOT::VecOps::RVec<int>& genPartMothers, const ROOT::VecOps::RVec<int>& pdgIds, int start_idx, function<bool(int)> test_func) {
+    const auto mother_idx = genPartMothers.at(start_idx);
+    if (mother_idx == -1) {
+      return false;
+    } else if (mother_idx >= 0 && mother_idx < genPartMothers.size()){
+      const auto mother_pdgId = pdgIds.at(mother_idx);
+      if (test_func(mother_pdgId)) {
+        return true;
+      }
+    } else {
+      assert(false && "mother_idx is incorrect");
+    }
+    return has_mother(genPartMothers, pdgIds, mother_idx, test_func);
+}
+
 void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   auto& event = static_cast<Event&>(_event);
 
@@ -34,12 +49,14 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
   vector<unsigned int> mediator_idx;
   vector<unsigned int> final_mu_idx;
 
+  const auto GenPart_pdgIds = event.lc_vint.get_vec(string_hash("GenPart_pdgId"));
+  const auto GenPart_genPartIdxMother = event.lc_vint.get_vec(string_hash("GenPart_genPartIdxMother"));
+
   const auto nGenPart = event.lc_uint.get(string_hash("nGenPart"));
   for (unsigned int _nGenPart = 0; _nGenPart < nGenPart; _nGenPart++) {
     const auto status =
         event.lc_vint.get(string_hash("GenPart_status"), _nGenPart);
-    const auto pdgId =
-        event.lc_vint.get(string_hash("GenPart_pdgId"), _nGenPart);
+    const auto pdgId = GenPart_pdgIds[_nGenPart];
     // const auto pt = event.lc_vfloat.get(string_hash("GenPart_pt"),
     // _nGenPart);
 
@@ -51,16 +68,11 @@ void MatrixElementEventAnalyzer::analyze(NanoEvent& _event) {
     } else if ((status == 22 && (pdgId == 25 || pdgId == 23))) {
       mediator_idx.push_back(_nGenPart);
       // final state particle
-    } else if (status == 1) {
-      const auto mother_idx =
-          event.lc_vint.get(string_hash("GenPart_genPartIdxMother"), _nGenPart);
-      if (mother_idx >= 0 && mother_idx < nGenPart) {
-        const auto mother_pdgId =
-            event.lc_vint.get(string_hash("GenPart_pdgId"), mother_idx);
+    } else if (status == 1 && abs(pdgId)==13) {
 
-        if (mother_pdgId == 25 || mother_pdgId == 23) {
-          final_mu_idx.push_back(_nGenPart);
-        }
+      const auto has_mother_H_or_Z = has_mother(GenPart_genPartIdxMother, GenPart_pdgIds, _nGenPart, [](int mother_id){ return (mother_id == 23) || (mother_id == 25);});
+      if (has_mother_H_or_Z) {
+        final_mu_idx.push_back(_nGenPart);
       }
     }
   }
