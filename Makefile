@@ -36,7 +36,7 @@ bin/libnanoflow.so: $(LIBNANOFLOW_DEPS)
 	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o $@ 
 
 bin/libanalyzers.so: $(LIBANALYZERS_DEPS)
-	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBANALYZERS_DEPS) -shared -o $@
+	$(CXX) ${CFLAGS} ${LDFLAGS} -L./bin -lnanoflow -lamp_hmm $(LIBANALYZERS_DEPS) -shared -o $@
 
 #executables
 bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so bin/libamp_hmm.so

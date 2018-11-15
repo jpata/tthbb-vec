@@ -16,16 +16,21 @@ MatrixElementHiggsMuMu::MatrixElementHiggsMuMu(string mg_card_path) : calibratio
 double MatrixElementHiggsMuMu::compute_me_final_mumu_hypo(TLorentzVector total_fs, TLorentzVector f1, TLorentzVector f2, TH1D* h_logpz, function<double(MatrixElementHiggsMuMu::pspoint)> compute_amplitude) {
   const auto E = total_fs.E();
   const auto pz = total_fs.Pz();
+  double amp = 0.0;
   
-  const auto rnd = h_logpz->GetRandom();
-  const auto pz_i1 = exp(rnd);
-  const auto pz_i2 = pz - pz_i1;
+  int iloop = 0;
+  while (amp == 0.0 && iloop<100) {
+    const auto rnd = h_logpz->GetRandom();
+    const auto pz_i1 = exp(rnd);
+    const auto pz_i2 = pz - pz_i1;
 
-  TLorentzVector i1_reco(0, 0, pz_i1, abs(pz_i1));
-  TLorentzVector i2_reco(0, 0, pz_i2, abs(pz_i2));
+    TLorentzVector i1_reco(0, 0, pz_i1, abs(pz_i1));
+    TLorentzVector i2_reco(0, 0, pz_i2, abs(pz_i2));
 
-  const auto phase_space_point = make_phase_space_4_lv(i1_reco, i2_reco, f1, f2);
-  double amp = compute_amplitude(phase_space_point);
+    const auto phase_space_point = make_phase_space_4_lv(i1_reco, i2_reco, f1, f2);
+    amp = compute_amplitude(phase_space_point);
+    iloop += 1;
+  }
   return amp;
 }
 
