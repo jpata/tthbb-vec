@@ -22,6 +22,8 @@ def setup_nanoflow():
     load_header("myanalyzers.h") 
     
     load_lib("bin/libnanoflow.so")    
+    load_lib("bin/libamp_hmm.so")    
+    load_lib("bin/libanalyzers.so")    
 
 def FileReport_to_dict(p):
     r = {
@@ -77,16 +79,16 @@ def run_looper(input_json, output_json):
     an = SequentialAnalysis(input_json) 
 
     an.add(ROOT.MuonEventAnalyzer(an.output))
-    an.add(ROOT.MatrixElementEventAnalyzer(an.output, 13000))
+    an.add(ROOT.MatrixElementEventAnalyzer(an.output, 13000, "data/param_card.dat"))
     #an.add(ROOT.JetEventAnalyzer(an.output))
     #an.add(ROOT.GenJetEventAnalyzer(an.output))
     #an.add(ROOT.GenRecoJetMatchAnalyzer(an.output))
     #an.add(ROOT.ElectronEventAnalyzer(an.output))
-    #an.add(ROOT.GenLeptonEventAnalyzer(an.output))
+    an.add(ROOT.GenLeptonEventAnalyzer(an.output))
     #an.add(ROOT.GenRecoLeptonMatchAnalyzer(an.output))
     # an.add(ROOT.SumPtAnalyzer(an.output))
     #an.add(ROOT.EventVarsAnalyzer(an.output))
-    # an.add(ROOT.LeptonPairAnalyzer(an.output))
+    an.add(ROOT.LeptonPairAnalyzer(an.output))
     # an.add(ROOT.JetDeltaRAnalyzer(an.output))
     an.add(ROOT.MyTreeAnalyzer(an.output))
     

@@ -6,7 +6,7 @@ LDFLAGS_MG=-L./bin/ -lamp_hmm
 CFLAGS_MG=-I./src/madgraph
 
 #final compiler and linker flags
-ROOT_CFLAGS=`root-config --cflags` -std=c++11
+ROOT_CFLAGS=`root-config --cflags`
 ROOT_LIBDIR=`root-config --libdir`
 CFLAGS=${ROOT_CFLAGS} ${OPTS} -I./interface/ ${CFLAGS_MG}
 LDFLAGS=-L${ROOT_LIBDIR} ${LIBS} ${OPTS}
@@ -16,9 +16,10 @@ LDFLAGS_LOOPER=${LDFLAGS_MG}
 #list of all objects for libraries
 LIBAMP_HMM_DEPS = bin/me_hmumu.o bin/rambo.o bin/read_slha.o bin/ProcessGGH.o bin/ProcessQQZ.o bin/Parameters_sm__hgg_plugin_full.o bin/HelAmps_sm__hgg_plugin_full.o
 LIBNANOFLOW_DEPS = bin/nanoflow.o
+LIBANALYZERS_DEPS = bin/myanalyzers.o bin/meanalyzer.o
 LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/meanalyzer.o
 
-all: bin/looper bin/libnanoflow.so bin/libamp_hmm.so bin/simple_loop bin/df
+all: bin/looper bin/libnanoflow.so bin/libamp_hmm.so bin/simple_loop bin/df bin/libanalyzers.so
 
 #objects
 bin/%.o: src/madgraph/%.cc
@@ -32,7 +33,10 @@ bin/libamp_hmm.so: $(LIBAMP_HMM_DEPS)
 	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBAMP_HMM_DEPS) -shared -o $@
 
 bin/libnanoflow.so: $(LIBNANOFLOW_DEPS)
-	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o bin/libnanoflow.so
+	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o $@ 
+
+bin/libanalyzers.so: $(LIBANALYZERS_DEPS)
+	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBANALYZERS_DEPS) -shared -o $@
 
 #executables
 bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so bin/libamp_hmm.so
