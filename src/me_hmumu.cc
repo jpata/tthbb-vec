@@ -19,7 +19,10 @@ double MatrixElementHiggsMuMu::compute_me_final_mumu_hypo(TLorentzVector total_f
   double amp = 0.0;
   
   int iloop = 0;
-  while (amp == 0.0 && iloop<100) {
+  int isuccess = 0;
+  double amp_tot = 0.0;
+
+  while (iloop < 100) {
     const auto rnd = h_logpz->GetRandom();
     const auto pz_i1 = exp(rnd);
     const auto pz_i2 = pz - pz_i1;
@@ -29,9 +32,13 @@ double MatrixElementHiggsMuMu::compute_me_final_mumu_hypo(TLorentzVector total_f
 
     const auto phase_space_point = make_phase_space_4_lv(i1_reco, i2_reco, f1, f2);
     amp = compute_amplitude(phase_space_point);
+    if (amp > 0.0) {
+      isuccess += 1;
+      amp_tot += amp;
+    }
     iloop += 1;
   }
-  return amp;
+  return amp_tot / static_cast<double>(isuccess);
 }
 
 MEValues MatrixElementHiggsMuMu::compute_me_final_mumu(TLorentzVector f1, TLorentzVector f2) {
