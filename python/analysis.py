@@ -18,6 +18,7 @@ import glob
 import multiprocessing
 
 from looper import run_looper, run_looper_args, setup_nanoflow
+from copy_files import copy_files
 
 sys.argv[:] = tmpargv[:]
 
@@ -235,43 +236,46 @@ class Analysis:
 
             return Analysis(mc_datasets, data_datasets)
    
-    def cache_filenames(self):
+    def get_datasets(self):
+        return self.mc_datasets + self.data_datasets
+
+    def cache_filenames(self, datasets):
         """Summary
         """
-        for dataset in self.mc_datasets:
-            dataset.cache_files()
-        for dataset in self.data_datasets:
-            dataset.cache_files()
+        for ds in datasets:
+            ds.cache_files()
+
+    def copy_files(self, datasets):
+        for ds in datasets:
+            fns = ds.get_files()
+            sources = [ds.global_file_prefix + fn for fn in fns]
+            destinations = [ds.cache_location + fn for fn in fns]
+            print "caching", ds.name
+            copy_files(sources, destinations, overwrite=False, validate=False)
 
 
-    def remove_jobfiles(self):
-        for ds in self.mc_datasets:
+    def remove_jobfiles(self, datasets):
+        for ds in datasets:
             ds.remove_jobfiles()
-        for ds in self.data_datasets:
-            ds.remove_jobfiles()
 
-    def create_jobfiles(self, perjob):
+    def create_jobfiles(self, datasets, perjob):
         """Summary
         
         Args:
-            perjob (TYPE): Description
+            perjob (int): Number of files to process per job
         """
-        LOG_MODULE_NAME.info("creating job files for analysis")
-        for ds in self.mc_datasets:
-            ds.create_jobfiles(perjob)
-        for ds in self.data_datasets:
+        for ds in datasets:
             ds.create_jobfiles(perjob)
 
-
-    def run_jobs(self):
+    def run_jobs(self, datasets, num_procs):
 
         ijobs = 0
         args = []
-        for ds in self.mc_datasets:
+        for ds in datasets:
             for jobfile in ds.get_jobfiles():
                 args += [(jobfile, jobfile + ".out")]
         
-        p = multiprocessing.Pool(16)
+        p = multiprocessing.Pool(num_procs)
         p.map(run_looper_args, args)
         p.close()  
 
@@ -283,6 +287,9 @@ if __name__ == "__main__":
 
     )
     parser.add_argument('--cache_das', help='Caches the dataset filenames from DAS',
+        action="store_true"
+    )
+    parser.add_argument('--copy_files', help='Copies the datasets locally to `cache_location`',
         action="store_true"
     )
     parser.add_argument('--remove_jobfiles', help='Removes the jobfiles from a previous run',
@@ -306,14 +313,19 @@ if __name__ == "__main__":
     
     analysis = Analysis.from_yaml(args.analysis)
     
+    datasets = analysis.get_datasets()
+
     if args.cache_das:
-        analysis.cache_filenames()
+        analysis.cache_filenames(datasets)
+    
+    if args.copy_files:
+        analysis.copy_files(datasets)
 
     if args.remove_jobfiles:
-        analysis.remove_jobfiles()
+        analysis.remove_jobfiles(datasets)
 
     if args.create_jobfiles:
-        analysis.create_jobfiles(1)
+        analysis.create_jobfiles(datasets, 1)
     
     if args.run_jobs:
-        analysis.run_jobs()
+        analysis.run_jobs(datasets, 16)
