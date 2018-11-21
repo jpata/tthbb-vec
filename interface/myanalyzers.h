@@ -104,12 +104,12 @@ class GenParticleInitial {
 
 
 // This data structure contains the configuration of the event loop.
-// Currently, this is only the input and output files.
 // We can load the configuration from a json file
 class Configuration {
  public:
   vector<string> input_files;
   string output_filename;
+  int max_events;
 
   Configuration(const std::string& json_file);
 };
