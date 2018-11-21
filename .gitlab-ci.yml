@@ -22,7 +22,7 @@ build-looper:
     tags: [ cvmfs ]
     stage: build
     script:
-      - cd nanoflow
+      - cd $CI_HOME
       - make
       - cd ..
       - tar -czf nanoflow.tgz nanoflow
