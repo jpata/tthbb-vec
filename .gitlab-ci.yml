@@ -19,6 +19,7 @@ before_script:
   - source setup.sh
 
 build-looper:
+    image: gitlab-registry.cern.ch/ci-tools/ci-worker:cc7
     tags: [ cvmfs ]
     stage: build
     script:
@@ -33,6 +34,7 @@ build-looper:
             - nanoflow.tgz
 
 run-looper:
+    image: gitlab-registry.cern.ch/ci-tools/ci-worker:cc7
     tags: [ cvmfs ]
     stage: test
     script:
