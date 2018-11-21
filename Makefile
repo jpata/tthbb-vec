@@ -13,15 +13,12 @@ LDFLAGS=-L${ROOT_LIBDIR} ${LIBS} ${OPTS}
 
 #list of all objects for libraries
 LIBNANOFLOW_DEPS = bin/nanoflow.o
-LIBANALYZERS_DEPS = bin/myanalyzers.o
-LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o
+LIBANALYZERS_DEPS = bin/myanalyzers.o bin/utils.o
+LOOPER_DEPS = bin/nanoflow.o bin/myanalyzers.o bin/looper.o bin/utils.o
 
 all: bin/looper bin/libnanoflow.so bin/simple_loop bin/libanalyzers.so
 
 #objects
-bin/%.o: src/madgraph/%.cc
-	$(CXX) -c $(CFLAGS) $< -o $@
-
 bin/%.o: src/%.cc
 	$(CXX) -c $(CFLAGS) $< -o $@
 

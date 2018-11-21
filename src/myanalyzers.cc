@@ -1,11 +1,5 @@
 #include "myanalyzers.h"
 
-TLorentzVector make_lv(float pt, float eta, float phi, float mass) {
-  TLorentzVector lv;
-  lv.SetPtEtaPhiM(pt, eta, phi, mass);
-  return lv;
-}
-
 // We need to write separate constructors for these objects,
 // as the branch names will be resolved to branch pointers at compile time
 Jet::Jet(NanoEvent* _event, unsigned int _index)
