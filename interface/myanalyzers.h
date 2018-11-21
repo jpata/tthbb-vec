@@ -6,118 +6,87 @@
 #include <TLorentzVector.h>
 
 #include "nanoflow.h"
-#include "me_hmumu.h"
 
+// Helper function to create a TLorentzVector from spherical coordinates
 TLorentzVector make_lv(float pt, float eta, float phi, float mass);
+
+//Objects that derive from this class contain the spherical components of
+//four-momentum and accessor functions for those.
+//These properties cannot be modified after creation for safety.
+class FourMomentumSpherical {
+ public:
+  const double _pt, _eta, _phi, _mass;
+  FourMomentumSpherical() : _pt(0.0), _eta(0.0), _phi(0.0), _mass(0.0) {}
+  FourMomentumSpherical(double pt, double eta, double phi, double mass)
+      : _pt(pt), _eta(eta), _phi(phi), _mass(mass) {}
+  inline double pt() const { return _pt; }
+
+  inline double eta() const { return _eta; }
+
+  inline double phi() const { return _phi; }
+
+  inline double mass() const { return _mass; }
+};
+
+
+//
+//Physics object datatypes
+//
+
 
 // We can specialize the LazyObject for specific physics objects
 // by wrapping the most commonly used branches.
 // Jet type based on the on-demand reading of quantities from the underlying
-// TTree
-
-class Jet : public LazyObject {
+// TTree. Such objects are constructed directly from the underlying
+// TTree data by referring to the branches in the constructor.
+class Jet : public LazyObject, public FourMomentumSpherical {
  public:
-  const double _pt, _eta, _phi, _mass;
   Jet(NanoEvent* _event, unsigned int _index);
   Jet(Jet&&) = default;
   Jet(const Jet&) = default;
   ~Jet() {}
-
-  inline double pt() const { return _pt; }
-
-  inline double eta() const { return _eta; }
-
-  inline double phi() const { return _phi; }
-
-  inline double mass() const { return _mass; }
 };
 
-class GenJet : public LazyObject {
+class GenJet : public LazyObject, public FourMomentumSpherical {
  public:
-  const double _pt, _eta, _phi, _mass;
   const int _partonFlavour;
   GenJet(NanoEvent* _event, unsigned int _index);
   ~GenJet() {}
 
-  inline double pt() const { return _pt; }
-
-  inline double eta() const { return _eta; }
-
-  inline double phi() const { return _phi; }
-
-  inline double mass() const { return _mass; }
-
   inline int partonFlavour() const { return _partonFlavour; }
 };
 
-class GenLepton : public LazyObject {
+class GenLepton : public LazyObject, public FourMomentumSpherical {
  public:
-  const float _pt, _eta, _phi, _mass;
   const int _pdgId;
   GenLepton(NanoEvent* _event, unsigned int _index);
   ~GenLepton() {}
 
-  inline double pt() const { return _pt; }
-
-  inline double eta() const { return _eta; }
-
-  inline double phi() const { return _phi; }
-
-  inline double mass() const { return _mass; }
-
   inline int pdgId() const { return _pdgId; }
 };
 
-class Muon : public LazyObject {
+class Muon : public LazyObject, public FourMomentumSpherical {
  public:
-  double _pt, _eta, _phi, _mass;
   int matchidx = -1;
 
   Muon(NanoEvent* _event, unsigned int _index);
   ~Muon() {}
-
-  inline double pt() const { return _pt; }
-
-  inline double eta() const { return _eta; }
-
-  inline double phi() const { return _phi; }
-
-  inline double mass() const { return _mass; }
 };
 
-// template <class T> void swap (T& a, T& b)
-// {
-//   T c(std::move(a)); a=std::move(b); b=std::move(c);
-// }
-
-class Electron : public LazyObject {
+class Electron : public LazyObject, public FourMomentumSpherical {
  public:
-  const double _pt, _eta, _phi, _mass;
   int matchidx = -1;
 
   Electron(NanoEvent* _event, unsigned int _index);
   ~Electron() {}
-
-  inline double pt() const { return _pt; }
-
-  inline double eta() const { return _eta; }
-
-  inline double phi() const { return _phi; }
-
-  inline double mass() const { return _mass; }
 };
 
-class GenParticle {
+class GenParticle : public FourMomentumSpherical {
  public:
-  float _pt, _eta, _phi, _mass;
   int _pdgId;
 
   GenParticle(float pt, float eta, float phi, float mass, int pdgId)
-      : _pt(pt), _eta(eta), _phi(phi), _mass(mass), _pdgId(pdgId) {}
-  inline float pt() { return _pt; };
-  inline float eta() { return _eta; };
-  inline float phi() { return _phi; };
-  inline float mass() { return _mass; };
+      : FourMomentumSpherical(pt, eta, phi, mass) {}
   inline int pdgId() { return _pdgId; };
 };
 
@@ -130,6 +99,9 @@ class GenParticleInitial {
   inline float pz() { return _pz; };
   inline float pdgId() { return _pdgId; };
 };
+
+
+
 
 // This data structure contains the configuration of the event loop.
 // Currently, this is only the input and output files.
@@ -159,20 +131,10 @@ class Event : public NanoEvent {
   vector<GenJet> genjets;
   vector<GenLepton> genleptons;
 
-  vector<GenParticleInitial> geninitialstate;
-  vector<GenParticle> mediators;
-  vector<GenParticle> genfinalstatemuon;
-
   // Simple variables
   double lep2_highest_inv_mass;
   int nMuon;
   int nMuon_match;
-
-  double me_gen_sig;
-  double me_gen_bkg;
-  double me_reco_sig;
-  double me_reco_bkg;
-  double reco_fs_pz;
 
   Event(TTreeReader& _reader, const Configuration& _config);
 
@@ -185,6 +147,10 @@ class Event : public NanoEvent {
   // absolute minimum here.
   void analyze();
 };
+
+//
+//Data analyzers
+//
 
 class MuonEventAnalyzer : public Analyzer {
  public:
@@ -229,22 +195,6 @@ class GenLeptonEventAnalyzer : public Analyzer {
   GenLeptonEventAnalyzer(Output& _output);
   virtual void analyze(NanoEvent& _event) override;
   virtual const string getName() const override;
-};
-
-class MatrixElementEventAnalyzer : public Analyzer {
- public:
-  Output& output;
-  double sqrt_s;
-
-  MatrixElementHiggsMuMu memcalc;
-
-  MatrixElementEventAnalyzer(Output& _output, double _sqrt_s, string mg_card_path);
-  virtual void analyze(NanoEvent& _event) override;
-  virtual const string getName() const override;
-  vector<GenParticle> get_particles_idx(Event& event,
-                                        vector<unsigned int>& final_mu_idx);
-  void match_muons(Event& event, vector<GenParticle>& gen, vector<Muon>& reco);
-  void count_matched_mu(Event& event, vector<Muon>& reco);
 };
 
 class GenRecoJetPair {
@@ -351,30 +301,6 @@ class MyTreeAnalyzer : public TreeAnalyzer {
  public:
   float lep2_highest_inv_mass;
   int nMuon_match;
-  double me_gen_sig;
-  double me_gen_bkg;
-  double me_reco_sig;
-  double me_reco_bkg;
-  double reco_fs_pz;
-  
-  int nGenInitialState;
-  array<float, 2> GenInitialState_pz;
-  array<float, 2> GenInitialState_energy;
-  array<int, 2> GenInitialState_pdgId;
-
-  int nGenMediator;
-  array<float, 1> GenMediator_px;
-  array<float, 1> GenMediator_py;
-  array<float, 1> GenMediator_pz;
-  array<float, 1> GenMediator_energy;
-  array<int, 1> GenMediator_pdgId;
-
-  int nGenFinalStateMuon;
-  array<float, 10> GenFinalStateMuon_px;
-  array<float, 10> GenFinalStateMuon_py;
-  array<float, 10> GenFinalStateMuon_pz;
-  array<float, 10> GenFinalStateMuon_energy;
-  array<int, 10> GenFinalStateMuon_pdgId;
 
   int nMuon;
   array<float, 10> Muon_px;
@@ -388,9 +314,6 @@ class MyTreeAnalyzer : public TreeAnalyzer {
   virtual const string getName() const override;
   void clear();
 
-  void fill_geninitialstate(vector<GenParticleInitial>& src);
-  void fill_mediator(vector<GenParticle>& src);
-  void fill_genfinalstatemuon(Event& event, vector<GenParticle>& src);
   void fill_muon(Event& event, vector<Muon>& src);
 };
 

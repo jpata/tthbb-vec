@@ -6,44 +6,47 @@ TLorentzVector make_lv(float pt, float eta, float phi, float mass) {
   return lv;
 }
 
+// We need to write separate constructors for these objects,
+// as the branch names will be resolved to branch pointers at compile time
 Jet::Jet(NanoEvent* _event, unsigned int _index)
     : LazyObject(_event, _index),
-      _pt(this->get_float(string_hash("Jet_pt"))),
-      _eta(this->get_float(string_hash("Jet_eta"))),
-      _phi(this->get_float(string_hash("Jet_phi"))),
-      _mass(this->get_float(string_hash("Jet_mass"))) {}
+      FourMomentumSpherical(this->get_float(string_hash("Jet_pt")),
+                            this->get_float(string_hash("Jet_eta")),
+                            this->get_float(string_hash("Jet_phi")),
+                            this->get_float(string_hash("Jet_mass"))) {}
 
 GenJet::GenJet(NanoEvent* _event, unsigned int _index)
     : LazyObject(_event, _index),
-      _pt(this->get_float(string_hash("GenJet_pt"))),
-      _eta(this->get_float(string_hash("GenJet_eta"))),
-      _phi(this->get_float(string_hash("GenJet_phi"))),
-      _mass(this->get_float(string_hash("GenJet_mass"))),
+      FourMomentumSpherical(this->get_float(string_hash("GenJet_pt")),
+                            this->get_float(string_hash("GenJet_eta")),
+                            this->get_float(string_hash("GenJet_phi")),
+                            this->get_float(string_hash("GenJet_mass"))),
       _partonFlavour(this->get_int(string_hash("GenJet_partonFlavour"))) {}
 
 GenLepton::GenLepton(NanoEvent* _event, unsigned int _index)
     : LazyObject(_event, _index),
-      _pt(this->get_float(string_hash("GenPart_pt"))),
-      _eta(this->get_float(string_hash("GenPart_eta"))),
-      _phi(this->get_float(string_hash("GenPart_phi"))),
-      _mass(this->get_float(string_hash("GenPart_mass"))),
+      FourMomentumSpherical(this->get_float(string_hash("GenPart_pt")),
+                            this->get_float(string_hash("GenPart_eta")),
+                            this->get_float(string_hash("GenPart_phi")),
+                            this->get_float(string_hash("GenPart_mass"))),
       _pdgId(this->get_int(string_hash("GenPart_pdgId"))) {}
 
 Muon::Muon(NanoEvent* _event, unsigned int _index)
     : LazyObject(_event, _index),
-      _pt(this->get_float(string_hash("Muon_pt"))),
-      _eta(this->get_float(string_hash("Muon_eta"))),
-      _phi(this->get_float(string_hash("Muon_phi"))),
-      _mass(this->get_float(string_hash("Muon_mass"))),
+      FourMomentumSpherical(this->get_float(string_hash("Muon_pt")),
+                            this->get_float(string_hash("Muon_eta")),
+                            this->get_float(string_hash("Muon_phi")),
+                            this->get_float(string_hash("Muon_mass"))),
       matchidx(-1) {}
 
 Electron::Electron(NanoEvent* _event, unsigned int _index)
     : LazyObject(_event, _index),
-      _pt(this->get_float(string_hash("Electron_pt"))),
-      _eta(this->get_float(string_hash("Electron_eta"))),
-      _phi(this->get_float(string_hash("Electron_phi"))),
-      _mass(this->get_float(string_hash("Electron_mass"))),
+      FourMomentumSpherical(this->get_float(string_hash("Electron_pt")),
+                            this->get_float(string_hash("Electron_eta")),
+                            this->get_float(string_hash("Electron_phi")),
+                            this->get_float(string_hash("Electron_mass"))),
       matchidx(-1) {}
+
 
 MuonEventAnalyzer::MuonEventAnalyzer(Output& _output) : output(_output) {
   cout << "Creating MuonEventAnalyzer" << endl;
@@ -52,12 +55,14 @@ MuonEventAnalyzer::MuonEventAnalyzer(Output& _output) : output(_output) {
 void MuonEventAnalyzer::analyze(NanoEvent& _event) {
   auto& event = static_cast<Event&>(_event);
 
+  // Read the necessary branches from disk
   event.lc_uint.read(string_hash("nMuon"));
   event.lc_vfloat.read(string_hash("Muon_pt"));
   event.lc_vfloat.read(string_hash("Muon_eta"));
   event.lc_vfloat.read(string_hash("Muon_phi"));
   event.lc_vfloat.read(string_hash("Muon_mass"));
 
+  // Construct muon objects from the branches and put them to the event
   const auto nMuon = event.lc_uint.get(string_hash("nMuon"));
   for (unsigned int _nMuon = 0; _nMuon < nMuon; _nMuon++) {
     Muon muon(&event, _nMuon);
@@ -228,7 +233,7 @@ void GenRecoJetMatchAnalyzer::analyze(NanoEvent& _event) {
   for (unsigned int i = 0; i < lvec_genjet.size(); i++) {
     unsigned int best_match_reco = 0;
     bool found_match = false;
-    double min_dr = 99.0;
+    double min_dr = 1e6;
 
     for (unsigned int j = 0; j < lvec_recojet.size(); j++) {
       const auto dr = lvec_genjet.at(i).DeltaR(lvec_recojet.at(j));
@@ -380,21 +385,9 @@ void Event::clear_event() {
   genjets.clear();
   genleptons.clear();
 
-  geninitialstate.clear();
-  mediators.clear();
-  genfinalstatemuon.clear();
-
   lep2_highest_inv_mass = 0;
   nMuon = 0;
   nMuon_match = 0;
-
-  me_gen_sig = 0.0;
-  me_gen_bkg = 0.0;
-
-  me_reco_sig = 0.0;
-  me_reco_bkg = 0.0;
-
-  reco_fs_pz = 0.0;
 }
 
 // In this function we create our event representation
@@ -504,12 +497,12 @@ const string JetDeltaRAnalyzer::getName() const { return "JetDeltaRAnalyzer"; }
 void LeptonPairAnalyzer::analyze(NanoEvent& _event) {
   auto& event = static_cast<Event&>(_event);
 
-  vector<LazyObject*> leps;
+  vector<FourMomentumSpherical*> leps;
   for (const auto& lep : event.muons) {
-    leps.push_back((LazyObject*)&lep);
+    leps.push_back((FourMomentumSpherical*)&lep);
   }
   for (const auto& lep : event.electrons) {
-    leps.push_back((LazyObject*)&lep);
+    leps.push_back((FourMomentumSpherical*)&lep);
   }
 
   vector<TLorentzVector> lep_lvs;
@@ -538,6 +531,71 @@ const string LeptonPairAnalyzer::getName() const {
   return "LeptonPairAnalyzer";
 };
 
+MyTreeAnalyzer::MyTreeAnalyzer(Output& _output) : TreeAnalyzer(_output) {
+  out_tree->Branch("lep2_highest_inv_mass", &lep2_highest_inv_mass,
+                   "lep2_highest_inv_mass/F");
+
+  out_tree->Branch("nMuon_match", &nMuon_match, "nMuon_match/I");
+
+  out_tree->Branch("nMuon", &nMuon, "nMuon/I");
+  out_tree->Branch("Muon_px", Muon_px.data(), "Muon_px[nMuon]/F");
+  out_tree->Branch("Muon_py", Muon_py.data(), "Muon_py[nMuon]/F");
+  out_tree->Branch("Muon_pz", Muon_pz.data(), "Muon_pz[nMuon]/F");
+  out_tree->Branch("Muon_energy", Muon_energy.data(), "Muon_energy[nMuon]/F");
+  out_tree->Branch("Muon_matchidx", Muon_matchidx.data(),
+                   "Muon_matchidx[nMuon]/I");
+}
+
+void MyTreeAnalyzer::clear() {
+  lep2_highest_inv_mass = 0.0;
+  nMuon = 0;
+  nMuon_match = 0;
+
+  nMuon = 0;
+  Muon_px.fill(0.0);
+  Muon_py.fill(0.0);
+  Muon_pz.fill(0.0);
+  Muon_energy.fill(0.0);
+  Muon_matchidx.fill(0);
+}
+
+void MyTreeAnalyzer::fill_muon(Event& event, vector<Muon>& src) {
+  if (src.size() > Muon_px.size()) {
+    cerr << "event " << event.event << " " << src.size() << endl;
+  }
+  nMuon = static_cast<int>(src.size());
+
+  unsigned int i = 0;
+  for (auto& gp : src) {
+    if (i >= Muon_px.size()) {
+      cerr << "ERROR: Muon out of range" << endl;
+      break;
+    }
+    const auto lv = make_lv(gp.pt(), gp.eta(), gp.phi(), gp.mass());
+    Muon_px[i] = static_cast<float>(lv.Px());
+    Muon_py[i] = static_cast<float>(lv.Py());
+    Muon_pz[i] = static_cast<float>(lv.Pz());
+    Muon_energy[i] = static_cast<float>(lv.Energy());
+    Muon_matchidx[i] = src.at(i).matchidx;
+    i += 1;
+  }
+}
+
+void MyTreeAnalyzer::analyze(NanoEvent& _event) {
+  this->clear();
+
+  auto& event = static_cast<Event&>(_event);
+  lep2_highest_inv_mass = event.lep2_highest_inv_mass;
+  nMuon = event.nMuon;
+  nMuon_match = event.nMuon_match;
+
+  fill_muon(event, event.muons);
+
+  TreeAnalyzer::analyze(event);
+}
+
+const string MyTreeAnalyzer::getName() const { return "MyTreeAnalyzer"; }
+
 FileReport looper_main(const Configuration& config, const string& filename,
                        TTreeReader& reader, Output& output,
                        const vector<Analyzer*>& analyzers, long long max_events,
@@ -558,7 +616,7 @@ FileReport looper_main(const Configuration& config, const string& filename,
   // Keep track of the total time per event
   FileReport report(filename, analyzers);
 
-  // This is the main event loop
+  // Start the loop over the TTree events
   cout << "starting loop over " << reader.GetEntries(true)
        << " events in TTree " << reader.GetTree() << endl;
   while (reader.Next()) {

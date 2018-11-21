@@ -32,7 +32,7 @@ build-looper:
       - eval `scramv1 runtime -sh`
       - cp -r $CI_HOME ./
       - cd nanoflow
-      - make looper
+      - make
       - cd $CMSSW_BASE/..
       - tar -czf cmssw.tgz $CMSSW_VERSION
       - du -csh cmssw.tgz
@@ -52,4 +52,4 @@ run-looper:
       - cd $CI_HOME/../$CMSSW_VERSION/src
       - eval `scramv1 runtime -sh`
       - cd nanoflow
-      - ./looper data/input_xrootd.json out.json
+      - ./bin/looper data/input_xrootd.json out.json

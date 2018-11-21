@@ -24,7 +24,7 @@ void loop_plain(TTreeReader& reader) {
 
   TStopwatch sw;
 
-  //const unsigned int nbytes = 0;
+  // const unsigned int nbytes = 0;
 
   // As usual in C++ ROOT, we have to predefine every branch and this can get
   // annoying, which is why I've developed a simple wrapper  You can find the
