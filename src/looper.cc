@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
 
     // call the main loop
     auto report =
-        looper_main(*conf, input_file, reader, *output, analyzers, -1, 1000);
+        looper_main(*conf, input_file, reader, *output, analyzers, conf->max_events, 1000);
     total_report.push_back(report);
     tf->Close();
   }

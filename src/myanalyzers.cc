@@ -365,6 +365,7 @@ Configuration::Configuration(const std::string& json_file) {
     input_files.push_back(fn);
   }
   output_filename = input_json.at("output_filename").get<std::string>();
+  max_events = input_json.at("max_events").get<int>();
 }
 
 Event::Event(TTreeReader& _reader, const Configuration& _config)

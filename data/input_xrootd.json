@@ -2,5 +2,6 @@
     "input_filenames": [
         "root://cms-xrd-global.cern.ch//store/mc/RunIIFall17NanoAOD/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/NANOAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/70000/B2E33B9A-4B59-E811-8B08-008CFAFBFCF0.root"
     ],
-    "output_filename": "out.root"
+    "output_filename": "out.root",
+    "max_events": 10000
 }
