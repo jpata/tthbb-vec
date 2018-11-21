@@ -40,5 +40,7 @@ run-looper:
     tags: [ cvmfs ]
     stage: test
     script:
-      - source setup.sh
+      - cd $CI_HOME
+      - pwd
+      - ls -al
       - ./bin/looper data/input_xrootd.json out.json
