@@ -1,5 +1,6 @@
 #https://lhcb.github.io/analysis-essentials/git/11-ci.html
-image: gitlab-registry.cern.ch/ci-tools/ci-worker:cc7
+#https://github.com/clelange/cmssw-docker
+image: index.docker.io/clelange/cc7-cms:latest
 
 stages:
     - build
