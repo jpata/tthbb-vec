@@ -41,6 +41,11 @@ run-looper:
     stage: test
     script:
       - cd $CI_HOME
+      - mv nanoflow.tgz ../
+      - cd ..
+      - rm -Rf nanoflow
+      - tar xf nanoflow.tgz
+      - cd nanoflow
       - pwd
       - ls -al
       - ./bin/looper data/input_xrootd.json out.json
