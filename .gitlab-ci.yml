@@ -40,10 +40,5 @@ run-looper:
     tags: [ cvmfs ]
     stage: test
     script:
-      - export CI_HOME="$( pwd )"
-      - cd $CI_HOME/..
-      - tar xfz $CI_HOME/nanoflow.tgz
-      - ls -al
-      - cd $CI_HOME/nanoflow
       - source setup.sh
       - ./bin/looper data/input_xrootd.json out.json
