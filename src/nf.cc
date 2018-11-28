@@ -5,19 +5,18 @@
 #include <TFile.h>
 #include <TROOT.h>
 
-// general framework declarations
-#include "nanoflow.h"
+#include "demoanalysis.h"
 
-#include "myanalyzers.h"
+using namespace nanoflow;
 
 int main(int argc, char* argv[]) {
   using json = nlohmann::json;
 
-  cout << get_time() << " looper main() started" << endl;
+  cout << get_time() << " nanoflow main() started" << endl;
   gROOT->SetBatch(true);
 
   if (argc != 3) {
-    cerr << "Usage: ./looper input.json output.json" << endl;
+    cerr << "Usage: ./nf input.json output.json" << endl;
     return 0;
   }
 
@@ -54,13 +53,13 @@ int main(int argc, char* argv[]) {
 
     // call the main loop
     auto report =
-        looper_main(*conf, input_file, reader, *output, analyzers, conf->max_events, 1000);
+        looper_main<MyAnalysisEvent, Configuration>(*conf, input_file, reader, *output, analyzers, conf->max_events, 1000);
     total_report.push_back(report);
     tf->Close();
   }
   output->close();
 
-  cout << get_time() << " looper main() done on json file " << argv[1] << endl;
+  cout << get_time() << " nanoflow main() done on json file " << argv[1] << endl;
 
   // Write the output metadata json
   std::ofstream out_json(argv[2]);

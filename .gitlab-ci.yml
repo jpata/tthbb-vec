@@ -48,4 +48,4 @@ run-looper:
       - cd nanoflow
       - pwd
       - ls -al
-      - ./bin/looper data/input_xrootd.json out.json
+      - ./bin/nf data/input_xrootd.json out.json
