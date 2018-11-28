@@ -4,13 +4,13 @@ using namespace nanoflow;
 
 ///////////////////////////////////////////////////////////////////////////////
 //                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                              PHYSICS OBJECTS
+//                             PHYSICS OBJECTS
 //                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
 ///////////////////////////////////////////////////////////////////////////////
 
 
 //Objects that derive from this class contain the spherical components of
-//four-momentum and accessor functions for those.
+//four-momentum and getter functions for those.
 //These properties cannot be modified after creation for safety.
 class FourMomentumSpherical {
  public:
@@ -28,13 +28,13 @@ class FourMomentumSpherical {
 };
 
 
-// We can specialize the LazyObject for specific physics objects
-// by wrapping the most commonly used branches.
-// Jet type based on the on-demand reading of quantities from the underlying
-// TTree. Such objects are constructed directly from the underlying
-// TTree data by referring to the branches in the constructor.
+// We create a Muon object which has spherical 4-momentum components
+// It also derives from the nanoflow::LazyObject, which allows the
+// muon data to be populated easily from the TTree branches. 
 class Muon : public LazyObject, public FourMomentumSpherical {
  public:
+
+  //Index of the matched generator muon
   int matchidx = -1;
 
   Muon(NanoEvent* _event, unsigned int _index)
@@ -50,13 +50,7 @@ class Muon : public LazyObject, public FourMomentumSpherical {
 
 ///////////////////////////////////////////////////////////////////////////////
 //                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                             ANALYSIS CONFIG
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                                ANALYZERS
+//                             EVENT STRUCTURE
 //                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -104,6 +98,13 @@ class MyAnalysisEvent : public NanoEvent {
   }
 };
 
+
+///////////////////////////////////////////////////////////////////////////////
+//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
+//                                ANALYZERS
+//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+///////////////////////////////////////////////////////////////////////////////
+
 //Loads muons from the underlying TTree
 class MuonEventAnalyzer : public Analyzer {
  public:
@@ -134,6 +135,13 @@ class MuonEventAnalyzer : public Analyzer {
   virtual const string getName() const override { return "MuonEventAnalyzer"; }
 
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
+//                               OUTPUT TREE
+//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+///////////////////////////////////////////////////////////////////////////////
 
 //Specification of the output
 class MyTreeAnalyzer : public TreeAnalyzer {
@@ -205,9 +213,3 @@ class MyTreeAnalyzer : public TreeAnalyzer {
     TreeAnalyzer::analyze(event);
   }
 };
-
-///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                                MAIN LOOP
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
-///////////////////////////////////////////////////////////////////////////////

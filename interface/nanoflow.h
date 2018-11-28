@@ -25,6 +25,14 @@ using nlohmann::json;
 using namespace std;
 
 namespace nanoflow {
+
+///////////////////////////////////////////////////////////////////////////////
+//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
+//                             ANALYSIS CONFIG
+//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+///////////////////////////////////////////////////////////////////////////////
+
+
 // This data structure contains the configuration of the event loop.
 // We can load the configuration from a json file
 class Configuration {
@@ -450,13 +458,19 @@ static inline TLorentzVector make_lv(float pt, float eta, float phi, float mass)
   return lv;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
+//                                MAIN LOOP
+//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+///////////////////////////////////////////////////////////////////////////////
 
-template <class EventClass, class ConfigurationClass>
+
 // This is the main event loop
 // Given a TTreeReader reader, we process all the specified analyzers and store
 // the  output in the Output data structure.  You shouldn't have to add anything
 // to the event loop if you want to compute a new  quantity - rather, you can
 // add a new Analyzer
+template <class EventClass, class ConfigurationClass>
 FileReport looper_main(const ConfigurationClass& config, const string& filename,
                        TTreeReader& reader, Output& output,
                        const vector<Analyzer*>& analyzers, long long max_events,
@@ -551,7 +565,7 @@ FileReport looper_main(const ConfigurationClass& config, const string& filename,
        << ",speed=" << report.speed << endl;
 
   return report;
-}
+} //looper_main
 
 } // namespace nanoflow
 #endif
