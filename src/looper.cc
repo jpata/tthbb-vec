@@ -8,7 +8,6 @@
 // general framework declarations
 #include "nanoflow.h"
 
-// our own custom analyzers
 #include "myanalyzers.h"
 
 int main(int argc, char* argv[]) {
@@ -35,11 +34,9 @@ int main(int argc, char* argv[]) {
   // Define the sequence of analyzers you want to run
   // These are defined in the myanalyzers.h/myanalyzers.cc files
   vector<Analyzer*> analyzers = {
-      new MuonEventAnalyzer(*output),     new JetEventAnalyzer(*output),
-      new GenJetEventAnalyzer(*output),   new GenRecoJetMatchAnalyzer(*output),
-      new ElectronEventAnalyzer(*output), new SumPtAnalyzer(*output),
-      new EventVarsAnalyzer(*output),     new LeptonPairAnalyzer(*output),
-      new JetDeltaRAnalyzer(*output),     new MyTreeAnalyzer(*output)};
+      new MuonEventAnalyzer(*output),
+      new MyTreeAnalyzer(*output)
+  };
 
   // Define the final output report
   json total_report;

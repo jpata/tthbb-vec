@@ -25,8 +25,8 @@ bin/%.o: src/%.cc
 bin/libnanoflow.so: $(LIBNANOFLOW_DEPS)
 	$(CXX) ${CFLAGS} ${LDFLAGS} $(LIBNANOFLOW_DEPS) -shared -o $@ 
 
-bin/libanalyzers.so: $(LIBANALYZERS_DEPS)
-	$(CXX) ${CFLAGS} ${LDFLAGS} -L./bin -lnanoflow $(LIBANALYZERS_DEPS) -shared -o $@
+#bin/libanalyzers.so: $(LIBANALYZERS_DEPS)
+#	$(CXX) ${CFLAGS} ${LDFLAGS} -L./bin -lnanoflow $(LIBANALYZERS_DEPS) -shared -o $@
 
 #executables
 bin/looper: $(LOOPER_DEPS) bin/libnanoflow.so
