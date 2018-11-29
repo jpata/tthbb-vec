@@ -213,3 +213,11 @@ class MyTreeAnalyzer : public TreeAnalyzer {
     TreeAnalyzer::analyze(event);
   }
 };
+
+//Define the looper function with specified templates
+static inline FileReport looper_main_demoanalysis(const Configuration& config, const string& filename,
+                       TTreeReader& reader, Output& output,
+                       const vector<Analyzer*>& analyzers, long long max_events,
+                       long long reportevery) {
+  return looper_main<MyAnalysisEvent, Configuration>(config, filename, reader, output, analyzers, max_events, reportevery);
+};
