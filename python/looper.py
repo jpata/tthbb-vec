@@ -60,7 +60,7 @@ class SequentialAnalysis:
         for inf in self.conf.input_files:
             tf = ROOT.TFile.Open(inf)
             reader = ROOT.TTreeReader("Events", tf)
-            report = looper_main(self.conf, inf, reader, self.output, self.analyzers, -1, 100)
+            report = looper_main(self.conf, inf, reader, self.output, self.analyzers, sel.conf.max_events, 100)
             all_reports.append(report)
 
         self.output.close()
