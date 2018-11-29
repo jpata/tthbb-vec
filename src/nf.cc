@@ -5,20 +5,18 @@
 #include <TFile.h>
 #include <TROOT.h>
 
-// general framework declarations
-#include "nanoflow.h"
+#include "demoanalysis.h"
 
-// our own custom analyzers
-#include "myanalyzers.h"
+using namespace nanoflow;
 
 int main(int argc, char* argv[]) {
   using json = nlohmann::json;
 
-  cout << get_time() << " looper main() started" << endl;
+  cout << get_time() << " nanoflow main() started" << endl;
   gROOT->SetBatch(true);
 
   if (argc != 3) {
-    cerr << "Usage: ./looper input.json output.json" << endl;
+    cerr << "Usage: ./nf input.json output.json" << endl;
     return 0;
   }
 
@@ -29,23 +27,24 @@ int main(int argc, char* argv[]) {
       std::make_unique<Configuration>(argv[1]);
 
   // Create the output file
+  cout << "Creating output file " << conf->output_filename << endl;
   std::unique_ptr<Output> output =
       std::make_unique<Output>(conf->output_filename);
 
   // Define the sequence of analyzers you want to run
   // These are defined in the myanalyzers.h/myanalyzers.cc files
+  cout << "Creating Analyzers" << endl;
   vector<Analyzer*> analyzers = {
-      new MuonEventAnalyzer(*output),     new JetEventAnalyzer(*output),
-      new GenJetEventAnalyzer(*output),   new GenRecoJetMatchAnalyzer(*output),
-      new ElectronEventAnalyzer(*output), new SumPtAnalyzer(*output),
-      new EventVarsAnalyzer(*output),     new LeptonPairAnalyzer(*output),
-      new JetDeltaRAnalyzer(*output),     new MyTreeAnalyzer(*output)};
+      new MuonEventAnalyzer(*output),
+      new MyTreeAnalyzer(*output)
+  };
 
   // Define the final output report
   json total_report;
 
   // Loop over all the input files
   for (const auto& input_file : conf->input_files) {
+    cout << "Opening input file " << input_file << endl;
     TFile* tf = TFile::Open(input_file.c_str());
     if (tf == nullptr) {
       cerr << "Could not open file " << input_file << ", exiting" << endl;
@@ -57,13 +56,15 @@ int main(int argc, char* argv[]) {
 
     // call the main loop
     auto report =
-        looper_main(*conf, input_file, reader, *output, analyzers, conf->max_events, 1000);
+        looper_main<MyAnalysisEvent, Configuration>(*conf, input_file, reader, *output, analyzers, conf->max_events, 1000);
+    
     total_report.push_back(report);
     tf->Close();
   }
+  cout << "All input files processed, saving output" << endl;
   output->close();
 
-  cout << get_time() << " looper main() done on json file " << argv[1] << endl;
+  cout << get_time() << " nanoflow main() done on json file " << argv[1] << endl;
 
   // Write the output metadata json
   std::ofstream out_json(argv[2]);

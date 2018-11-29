@@ -48,4 +48,18 @@ run-looper:
       - cd nanoflow
       - pwd
       - ls -al
-      - ./bin/looper data/input_xrootd.json out.json
+      - ./bin/nf data/input_xrootd.json out.json
+
+run-looper-py:
+    tags: [ cvmfs ]
+    stage: test
+    script:
+      - cd $CI_HOME
+      - mv nanoflow.tgz ../
+      - cd ..
+      - rm -Rf nanoflow
+      - tar xf nanoflow.tgz
+      - cd nanoflow
+      - pwd
+      - ls -al
+      - python python/looper.py data/input_xrootd.json out.json

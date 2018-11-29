@@ -16,14 +16,9 @@ def load_lib(path):
 
 def setup_nanoflow():
     ROOT.gROOT.ProcessLine('.include interface')
-    ROOT.gROOT.ProcessLine('.include src/madgraph')
    
     load_header("nanoflow.h") 
-    load_header("myanalyzers.h") 
-    
-    load_lib("bin/libnanoflow.so")    
-    load_lib("bin/libamp_hmm.so")    
-    load_lib("bin/libanalyzers.so")    
+    load_header("demoanalysis.h")   
 
 def FileReport_to_dict(p):
     r = {
@@ -43,17 +38,20 @@ class SequentialAnalysis:
     def __init__(self, input_json):
         self.modules = []
         
-        self.conf = ROOT.Configuration(input_json)
-        self.output = ROOT.Output(self.conf.output_filename)
-    
-        vector_Analyzer = getattr(ROOT, "vector<Analyzer*>")
+        self.conf = ROOT.nanoflow.Configuration(input_json)
+        self.output = ROOT.nanoflow.Output(self.conf.output_filename)
+        print self.conf, self.output
+
+        vector_Analyzer = getattr(ROOT, "std::vector<nanoflow::Analyzer*>")
         self.analyzers = vector_Analyzer()
+        print self.analyzers
 
     def add(self, module):
         self.modules.append(module)
 
     def run(self):
-        looper_main = getattr(ROOT, "looper_main")
+        looper_main = getattr(ROOT, "looper_main_demoanalysis")
+        print looper_main
         all_reports = []
 
         for module in self.modules:
@@ -79,17 +77,6 @@ def run_looper(input_json, output_json):
     an = SequentialAnalysis(input_json) 
 
     an.add(ROOT.MuonEventAnalyzer(an.output))
-    an.add(ROOT.MatrixElementEventAnalyzer(an.output, 13000, "data/param_card.dat"))
-    #an.add(ROOT.JetEventAnalyzer(an.output))
-    #an.add(ROOT.GenJetEventAnalyzer(an.output))
-    #an.add(ROOT.GenRecoJetMatchAnalyzer(an.output))
-    #an.add(ROOT.ElectronEventAnalyzer(an.output))
-    an.add(ROOT.GenLeptonEventAnalyzer(an.output))
-    #an.add(ROOT.GenRecoLeptonMatchAnalyzer(an.output))
-    # an.add(ROOT.SumPtAnalyzer(an.output))
-    #an.add(ROOT.EventVarsAnalyzer(an.output))
-    an.add(ROOT.LeptonPairAnalyzer(an.output))
-    # an.add(ROOT.JetDeltaRAnalyzer(an.output))
     an.add(ROOT.MyTreeAnalyzer(an.output))
     
     reports = an.run()
