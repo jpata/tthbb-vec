@@ -3,24 +3,27 @@
 ##
 # Example : copy a set of files in one go
 #
-import gfal2
+from __future__ import print_function
 import optparse
 import shlex
 import sys
 import argparse
 import logging
 from analysis import Analysis
+try:
+    import gfal2
+except ImportError as e:
+    print("gfal2-python library not found", e)
 
 def event_callback(event):
     if event.domain == "GFAL2:CORE:COPY" and event.stage == "LIST:ITEM": 
-    	print "[%s] %s %s %s" % (event.timestamp, event.domain, event.stage, event.description)
+    	print("[%s] %s %s %s" % (event.timestamp, event.domain, event.stage, event.description))
 
 def monitor_callback(src, dst, average, instant, transferred, elapsed):
-    print "[%4d] %.2fMB (%.2fKB/s)\r" % (elapsed, transferred/1014/1024, average/1024),
+    print("[%4d] %.2fMB (%.2fKB/s)\r" % (elapsed, transferred/1014/1024, average/1024))
     sys.stdout.flush()
 
 def copy_files(sources, destinations, overwrite=False, validate=False):
-    
     # Instantiate gfal2
     ctx = gfal2.creat_context()
 
@@ -40,18 +43,18 @@ def copy_files(sources, destinations, overwrite=False, validate=False):
     try:
         errors = ctx.filecopy(params, sources, destinations)
         if not errors:
-            print "Copy succeeded!"
+            print("Copy succeeded!")
         else:
             for i in range(len(errors)):
                 e = errors[i]
                 src = sources[i]
                 dst = destinations[i]
                 if e:
-                    print "%s => %s failed [%d] %s" % (src, dst, e.code, e.message)
+                    print("%s => %s failed [%d] %s" % (src, dst, e.code, e.message))
                 else:
-                    print "%s => %s succeeded!" % (src, dst)
+                    print("%s => %s succeeded!" % (src, dst))
     except Exception, e:
-        print "Copy failed: %s" % str(e)
+        print("Copy failed: %s" % str(e))
         sys.exit(1)
 
 if __name__ == '__main__':
@@ -74,5 +77,5 @@ if __name__ == '__main__':
         fns = ds.get_files()
         sources = [ds.global_file_prefix + fn for fn in fns]
         destinations = [ds.cache_location + fn for fn in fns]
-        print "caching", ds.name
+        print("caching", ds.name)
         copy_files(sources, destinations, overwrite=False, validate=False)

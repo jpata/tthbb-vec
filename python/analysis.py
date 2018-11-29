@@ -17,8 +17,6 @@ import argparse
 import glob
 import multiprocessing
 
-from looper import run_looper, run_looper_args, setup_nanoflow
-from copy_files import copy_files
 
 sys.argv[:] = tmpargv[:]
 
@@ -171,6 +169,7 @@ class Dataset:
                 job_json = {
                     "input_filenames": files_chunk,
                     "output_filename": _outfile,
+                    "max_events": -1
                 }
                 fi.write(json.dumps(job_json, indent=2))
             ijob += 1
@@ -246,6 +245,7 @@ class Analysis:
             ds.cache_files()
 
     def copy_files(self, datasets):
+        from copy_files import copy_files
         for ds in datasets:
             fns = ds.get_files()
             sources = [ds.global_file_prefix + fn for fn in fns]
@@ -268,7 +268,8 @@ class Analysis:
             ds.create_jobfiles(perjob)
 
     def run_jobs(self, datasets, num_procs):
-
+        from looper import run_looper, run_looper_args, setup_nanoflow
+        setup_nanoflow()
         ijobs = 0
         args = []
         for ds in datasets:
@@ -307,7 +308,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    setup_nanoflow()
 
     logging.basicConfig(level=getattr(logging, args.loglevel))
     

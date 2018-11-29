@@ -1,6 +1,4 @@
-
 datasets:
-
   #The ROOT TFile prefix that allows us to access the files
 #  global_file_prefix: root://cms-xrd-global.cern.ch/
   global_file_prefix: file:///mnt/hadoop/
