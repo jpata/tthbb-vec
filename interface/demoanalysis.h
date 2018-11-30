@@ -3,9 +3,9 @@
 using namespace nanoflow;
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                             PHYSICS OBJECTS
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                             PHYSICS OBJECTS                               //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -49,9 +49,9 @@ class Muon : public LazyObject, public FourMomentumSpherical {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                             EVENT STRUCTURE
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                             EVENT STRUCTURE                               //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -88,21 +88,24 @@ class MyAnalysisEvent : public NanoEvent {
   void analyze() {
     clear_event();
 
-    this->lc_uint.read(string_hash("run"));
+    //In older NanoAOD, this was int instead of uint
+    //this->lc_uint.read(string_hash("run"));
+    this->lc_int.read(string_hash("run"));
+    //this->run = this->lc_uint.get(string_hash("run"));
+    this->run = this->lc_int.get(string_hash("run"));
+    
     this->lc_uint.read(string_hash("luminosityBlock"));
-    this->lc_ulong64.read(string_hash("event"));
-
-    this->run = this->lc_uint.get(string_hash("run"));
     this->luminosityBlock = this->lc_uint.get(string_hash("luminosityBlock"));
+    this->lc_ulong64.read(string_hash("event"));
     this->event = this->lc_ulong64.get(string_hash("event"));
   }
 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                                ANALYZERS
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                                ANALYZERS                                  //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 //Loads muons from the underlying TTree
@@ -138,9 +141,9 @@ class MuonEventAnalyzer : public Analyzer {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                               OUTPUT TREE
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //                           
+//                               OUTPUT TREE                                 //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 //Specification of the output
@@ -181,15 +184,12 @@ class MyTreeAnalyzer : public TreeAnalyzer {
   }
 
   void fill_muon(MyAnalysisEvent& event, vector<Muon>& src) {
-    if (src.size() > Muon_px.size()) {
-      cerr << "event " << event.event << " " << src.size() << endl;
-    }
     nMuon = static_cast<int>(src.size());
 
     unsigned int i = 0;
     for (auto& gp : src) {
       if (i >= Muon_px.size()) {
-        cerr << "ERROR: Muon out of range" << endl;
+        cerr << "ERROR: fill_muon, Muon out of range: " << src.size() << ">=" << Muon_px.size() << " event " << event.event << " " << src.size() << endl;
         break;
       }
       const auto lv = make_lv(gp.pt(), gp.eta(), gp.phi(), gp.mass());

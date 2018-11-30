@@ -1,47 +1,51 @@
 datasets:
   #The ROOT TFile prefix that allows us to access the files
+  global_file_prefix: http://hep.kbfi.ee/~joosep/cms_opendata_2012_nanoaod_nanoflow_skim/
+#  global_file_prefix: root://eospublic.cern.ch
 #  global_file_prefix: root://cms-xrd-global.cern.ch/
-  global_file_prefix: file:///mnt/hadoop/
-  cache_location: file:///fast
-  workdirectory: /fast/tmp1
+  cache_location: ./data/local_cache/
+  workdirectory: ./data/workdir/
   use_cache: true
 
   #All the simulation datasets are gathered here
   simulation:
     #we group together datasets that represent the same physics process and should be added together in the analysis, for example semileptonic tt+jets is ttjets_sl
-    ttjets_sl:
+    ZZTo4e:
 
       #each dataset has a DAS name and a cross section
-      - name: /TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/NANOAODSIM
-        xs: 123.4 #this is just a dummy value
+      - name: ZZTo4e
+        xs: 123.4 #this is just a dummy value to show you can specify metadata about a dataset
+        files:
+          - skim_ZZTo4e.root
 
-      - name: /TTToSemiLeptonic_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM 
+    ZZTo4mu:
+      - name: ZZTo4mu
+        files:
+          - skim_ZZTo4mu.root
 
-    ttjets_dl:
-      - name: /TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
-      - name: /TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
-
-    ttjets_had:
-      - name: /TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
+    ZZTo2e2mu:
+      - name: ZZTo2e2mu
+        files:
+          - skim_ZZTo2e2mu.root
     
-    dyjets_ll:
-      - name: /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/NANOAODSIM
-      - name: /DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
-
-    ggh_hmumu:
-      - name: /GluGluHToMuMu_M125_13TeV_amcatnloFXFX_pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM
+    SMHiggsToZZTo4L:
+      - name: SMHiggsToZZTo4L
+        files:
+          - skim_SMHiggsToZZTo4L.root
   
   data:
-    SingleMuon:
-      - name: /SingleMuon/Run2017F-31Mar2018-v1/NANOAOD
-      - name: /SingleMuon/Run2017E-31Mar2018-v1/NANOAOD
-      - name: /SingleMuon/Run2017D-31Mar2018-v1/NANOAOD
-      - name: /SingleMuon/Run2017C-31Mar2018-v1/NANOAOD
-      - name: /SingleMuon/Run2017B-31Mar2018-v1/NANOAOD
+    DoubleMuParked:
+      - name: Run2012B_DoubleMuParked
+        files:
+          - skim_Run2012B_DoubleMuParked.root
+      - name: Run2012C_DoubleMuParked
+        files:
+          - skim_Run2012C_DoubleMuParked.root
 
-    SingleElectron:
-      - name: /SingleElectron/Run2017F-31Mar2018-v1/NANOAOD
-      - name: /SingleElectron/Run2017E-31Mar2018-v1/NANOAOD
-      - name: /SingleElectron/Run2017D-31Mar2018-v1/NANOAOD
-      - name: /SingleElectron/Run2017C-31Mar2018-v1/NANOAOD
-      - name: /SingleElectron/Run2017B-31Mar2018-v1/NANOAOD
+    DoubleElectron:
+      - name: Run2012B_DoubleElectron
+        files:
+          - skim_Run2012B_DoubleElectron.root
+      - name: Run2012C_DoubleElectron
+        files:
+          - skim_Run2012C_DoubleElectron.root

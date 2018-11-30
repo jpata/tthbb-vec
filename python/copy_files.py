@@ -9,7 +9,9 @@ import shlex
 import sys
 import argparse
 import logging
+import os
 from analysis import Analysis
+
 try:
     import gfal2
 except ImportError as e:
@@ -23,19 +25,30 @@ def monitor_callback(src, dst, average, instant, transferred, elapsed):
     print("[%4d] %.2fMB (%.2fKB/s)\r" % (elapsed, transferred/1014/1024, average/1024))
     sys.stdout.flush()
 
+def check_target_dir(dest):
+    if "file://" in dest:
+        dest = dest.replace("file://", "")
+        dest_dir = os.path.dirname(dest)
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
 def copy_files(sources, destinations, overwrite=False, validate=False):
     # Instantiate gfal2
     ctx = gfal2.creat_context()
 
     # Set transfer parameters
     params = ctx.transfer_parameters()
-    params.event_callback   = event_callback
+    params.event_callback = event_callback
     params.monitor_callback = monitor_callback
     params.create_parent = True
     params.nbstreams = 5 
     params.overwrite = overwrite
     params.checksum_check = validate
-        
+
+    #make sure target directories exist    
+    for dest in destinations:
+        check_target_dir(dest)
+ 
     # Copy!
     # In this case, an exception will be thrown if the whole process fails
     # If any transfer fail, the method will return a list of GError objects, one per file
