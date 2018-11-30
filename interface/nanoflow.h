@@ -27,9 +27,9 @@ using namespace std;
 namespace nanoflow {
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                             ANALYSIS CONFIG
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                             ANALYSIS CONFIG                               //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -40,6 +40,7 @@ class Configuration {
   vector<string> input_files;
   string output_filename;
   int max_events;
+  int report_period;
 
   //Populate the Configuration from json
   Configuration(const string& json_file) {
@@ -52,13 +53,14 @@ class Configuration {
     }
     output_filename = input_json.at("output_filename").get<string>();
     max_events = input_json.at("max_events").get<int>();
+    report_period = input_json.at("report_period").get<int>();
   }
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                               DATA ACCESS
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                               DATA ACCESS                                 //
+//                                                                           // 
 ///////////////////////////////////////////////////////////////////////////////
 
 // Compile-time hash function for strings from
@@ -309,9 +311,9 @@ class Output {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                                ANALYZERS
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                                ANALYZERS                                  //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 // This is a simple template of an Analyzer
@@ -434,9 +436,9 @@ static inline void to_json(json& j, const FileReport& p) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                            UTILITY FUNCTIONS
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                            UTILITY FUNCTIONS                              //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -459,9 +461,9 @@ static inline TLorentzVector make_lv(float pt, float eta, float phi, float mass)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//                           ╔⏤⏤⏤⏤╝❀╚⏤⏤⏤⏤╗
-//                                MAIN LOOP
-//                           ╚⏤⏤⏤⏤╗❀╔⏤⏤⏤⏤╝
+//                                                                           //
+//                                MAIN LOOP                                  //
+//                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
 

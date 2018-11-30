@@ -1,84 +1,28 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import ROOT
 import json
 import sys
-
-def load_header(path):
-    print "loading header {0}".format(path)
-    ret = ROOT.gROOT.ProcessLine('#include "{0}"'.format(path))
-    if ret != 0:
-        raise Exception("Could not load header {0}".format(path))
-
-def load_lib(path):
-    ret = ROOT.gSystem.Load(path)
-    if ret != 0:
-        raise Exception("Could not load library {0}".format(path))
+import nanoflow
 
 def setup_nanoflow():
+    print("setting include dir")   
     ROOT.gROOT.ProcessLine('.include interface')
-   
-    load_header("nanoflow.h") 
-    load_header("demoanalysis.h")   
-
-def FileReport_to_dict(p):
-    r = {
-        "filename": p.filename,
-        "num_events_processed": p.num_events_processed,
-        "cpu_time": p.cpu_time,
-        "real_time": p.real_time,
-        "speed": p.speed,
-        "event_duration": p.event_duration,
-        "analyzer_durations": list(p.analyzer_durations),
-        "analyzer_names": list(p.analyzer_names)
-    }
-    return r
-
-class SequentialAnalysis:
-
-    def __init__(self, input_json):
-        self.modules = []
-        
-        self.conf = ROOT.nanoflow.Configuration(input_json)
-        self.output = ROOT.nanoflow.Output(self.conf.output_filename)
-        print self.conf, self.output
-
-        vector_Analyzer = getattr(ROOT, "std::vector<nanoflow::Analyzer*>")
-        self.analyzers = vector_Analyzer()
-        print self.analyzers
-
-    def add(self, module):
-        self.modules.append(module)
-
-    def run(self):
-        looper_main = getattr(ROOT, "looper_main_demoanalysis")
-        print looper_main
-        all_reports = []
-
-        for module in self.modules:
-            self.analyzers.push_back(module)
-  
-        for inf in self.conf.input_files:
-            tf = ROOT.TFile.Open(inf)
-            reader = ROOT.TTreeReader("Events", tf)
-            report = looper_main(self.conf, inf, reader, self.output, self.analyzers, sel.conf.max_events, 100)
-            all_reports.append(report)
-
-        self.output.close()
-        
-        reports = [FileReport_to_dict(p) for p in all_reports]
-	return reports
-   
-    def save(self, reports, output_json): 
-        with open(output_json, "w") as outfile:
-            json.dump(reports, outfile, indent=2)
-
+    print("including nanoflow.h")   
+    nanoflow.load_header("nanoflow.h") 
+    print("including demoanalysis.h")   
+    nanoflow.load_header("demoanalysis.h")   
 
 def run_looper(input_json, output_json):
-    an = SequentialAnalysis(input_json) 
+    print("Constructing analysis")   
+    an = nanoflow.SequentialAnalysis(input_json, getattr(ROOT, "looper_main_demoanalysis")) 
 
+    print("Adding MuonEventAnalyzer")   
     an.add(ROOT.MuonEventAnalyzer(an.output))
+    print("Adding MyTreeAnalyzer")   
     an.add(ROOT.MyTreeAnalyzer(an.output))
     
+    print("Running analysis")   
     reports = an.run()
     an.save(reports, output_json)
 

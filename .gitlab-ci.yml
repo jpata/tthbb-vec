@@ -5,6 +5,7 @@ image: index.docker.io/clelange/cc7-cms:latest
 stages:
     - build
     - test
+    - analysis
 
 before_script:
   - source /cvmfs/grid.cern.ch/etc/profile.d/setup-cvmfs-ui.sh
@@ -63,3 +64,18 @@ run-looper-py:
       - pwd
       - ls -al
       - python python/looper.py data/input_xrootd.json out.json
+
+analysis-flow:
+    tags: [ cvmfs ]
+    stage: analysis
+    script:
+      - cd $CI_HOME
+      - mv nanoflow.tgz ../
+      - cd ..
+      - rm -Rf nanoflow
+      - tar xf nanoflow.tgz
+      - cd nanoflow
+      - pwd
+      - ls -al
+      - ./data/local_cache/download_skims.sh
+      - python python/analysis.py --analysis data/analysis.yaml --create_jobfiles --run_jobs
