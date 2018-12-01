@@ -77,5 +77,4 @@ analysis-flow:
       - cd nanoflow
       - pwd
       - ls -al
-      - ./data/local_cache/download_skims.sh
       - python python/analysis.py --analysis data/analysis.yaml --create_jobfiles --run_jobs

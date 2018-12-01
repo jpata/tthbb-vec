@@ -1,0 +1,8 @@
+data/local_cache/skim_ZZTo2e2mu.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_ZZTo4e.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_ZZTo4mu.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_Run2012B_DoubleElectron.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_Run2012B_DoubleMuParked.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_Run2012C_DoubleElectron.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_Run2012C_DoubleMuParked.root filter=lfs diff=lfs merge=lfs -text
+data/local_cache/skim_SMHiggsToZZTo4L.root filter=lfs diff=lfs merge=lfs -text

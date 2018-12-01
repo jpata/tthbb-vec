@@ -2,7 +2,20 @@
 
 TL;DR: nanoflow is a single-header C++ library to write event loops over NanoAOD - compile your own exe or call from python.
 
-The final stage of LHC collider data analysis is usually in the form of ROOT files containing events formed of a variable number of simple data types (floats, ints). In CMS, this is the NanoAOD step. Usually, we analyze the data in an explicit event loop. 
+The final stage of LHC collider data analysis is usually in the form of ROOT files containing events formed of a variable number of simple data types (floats, ints). In CMS, this is the NanoAOD step and the structure of the data looks something like this:
+
+~~~
+run       : run/I
+luminosityBlock : luminosityBlock/i
+event     : event/l
+nMuon     : nMuon/i
+Muon_pt   : Muon_pt[nMuon]/F
+Muon_eta  : Muon_eta[nMuon]/F
+Muon_phi  : Muon_phi[nMuon]/F
+Muon_mass : Muon_mass[nMuon]/F
+~~~
+
+Usually, we analyze the data in an explicit event loop. 
 
 ## Simple event loop
 
@@ -11,7 +24,7 @@ You can compile and run it using
 
 ~~~
 make simple_loop
-./simple_loop input.root
+./bin/simple_loop input.root
 ~~~
 
 In this simple example, we need to predefine the event structure by hand in case we want to access it:
@@ -24,7 +37,7 @@ In this simple example, we need to predefine the event structure by hand in case
     TTreeReaderArray<float> Jet_mass(reader, "Jet_mass");
 ~~~
 
-For complex events, it gets tedious to maintain this. On the other hand, in Python, you can access the branches simply using `tree.branch_name`, but this results in slow analysis code, as no Python needs to carefully check the datatype of any variable before using it.
+For complex events, it gets tedious to maintain this. On the other hand, in Python, you can access the branches simply using `tree.branch_name`, but this results in slow analysis code, as Python needs to carefully check the datatype of any variable before using it.
 
 The nanoflow analysis tool is an example of how to access NanoAOD data from C++ in a lazy way without having to predefine the full event structure, but still retain some flexibility of specifying the analysis flow in python.
 
@@ -37,11 +50,11 @@ You need at least GCC 6.2 and ROOT 6.14. Older versions of ROOT (6.10) have some
 ~~~
 git clone https://gitlab.cern.ch/jpata/nanoflow.git
 cd nanoflow
+source setup.sh
 make
 ./bin/nf data/input_xrootd.json out.json
 root -l out.root
 ~~~
-
 
 ## Overview
 
