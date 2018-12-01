@@ -50,7 +50,7 @@ You need at least GCC 6.2 and ROOT 6.14. Older versions of ROOT (6.10) have some
 ~~~
 git clone https://gitlab.cern.ch/jpata/nanoflow.git
 cd nanoflow
-source setup.sh
+source setup.sh #or setup-slc6.sh on lxplus or other SLC6 machine
 make
 ./bin/nf data/input_xrootd.json out.json
 root -l out.root
@@ -64,10 +64,10 @@ The `src/nf.cc` file lists the main parts of a nanoflow analysis:
 ~~~
 
   //Load a configuration object from a json file
-  unique_ptr<Configuration> conf = make_unique<Configuration>(argv[1]);
+  Configuration> conf(argv[1]);
 
   //configure the ROOT output file
-  unique_ptr<Output> output = make_unique<Output>(conf->output_filename);
+  Output output(conf.output_filename);
 
   //define the analysis as a sequence of Analyzers
   vector<Analyzer*> analyzers = {
@@ -76,7 +76,10 @@ The `src/nf.cc` file lists the main parts of a nanoflow analysis:
   };
 
   //Call the event loop, specifying that our event data type is defined in MyAnalysisEvent.
-  auto report = looper_main<MyAnalysisEvent, Configuration>(...input_file, configuration...);
+  auto report = looper_main<MyAnalysisEvent, Configuration>(conf, reader, output, analyzers);
+
+  //Print the overall CPU efficiency and fraction of time spent per analyzer
+  report.print(cout);
 ~~~
 
 The `MuonAnalyzer` constructs the `Muon` objects from the underlying ROOT TTree and the `MyTreeAnalyzer` specifies what to save to an output TTree. The data structure `MyAnalysisEvent` is defined in `interface/demoanalysis.h` and looks something like this
@@ -97,7 +100,7 @@ class MyAnalysisEvent : public NanoEvent {
 }
 ~~~
 
-That's it! To get started, either clone this repository and modify `interface/demoanalysis.h` or just download the files `interface/nanoflow.h` and `interface/json.hpp`.
+That's it! To get started, either clone this repository and modify `interface/demoanalysis.h` or just download the files `interface/nanoflow.h` and `interface/json.hpp` to use in your own project.
 
 # Analyzing multiple datasets
 

@@ -103,20 +103,33 @@ class LazyArrayReader {
   }
 
   void read(const unsigned int& id_hash) {
-    value_cache[id_hash] = ROOT::VecOps::RVec<T>(
-        (*reader_cache.at(id_hash)).begin(), (*reader_cache.at(id_hash)).end());
+    if (reader_cache.find(id_hash) != reader_cache.end()) {
+      const auto& branch_val = *reader_cache.at(id_hash);
+
+      value_cache[id_hash] = ROOT::VecOps::RVec<T>(branch_val.begin(), branch_val.end());
+    } else {
+      throw std::runtime_error("read(): tried to read a branch that did not exist in the TTree");
+    }
   }
 
   // Gets the value stored in a specific array at a specific index
   inline T get(const unsigned int& id_hash, unsigned int idx) const {
     // const TTreeReaderArray<T>& val = *reader_cache.at(id_hash);
     // return (*reader_cache.at(id_hash))[idx];
-    return value_cache.at(id_hash)[idx];
+    if (value_cache.find(id_hash) != value_cache.end()) {
+      return value_cache.at(id_hash)[idx];
+    } else {
+      throw std::runtime_error("get(): tried to read a branch that did not exist in the TTree");
+    }
   }
 
   // Gets the full vector
   inline ROOT::VecOps::RVec<T> get_vec(const unsigned int& id_hash) const {
-    return value_cache.at(id_hash);
+    if (value_cache.find(id_hash) != value_cache.end()) {
+      return value_cache.at(id_hash);
+    } else {
+      throw std::runtime_error("get_vec(): tried to read a branch that did not exist in the TTree");
+    }
   }
 };
 
@@ -144,11 +157,19 @@ class LazyValueReader {
   }
 
   void read(const unsigned int& id_hash) {
-    value_cache[id_hash] = **reader_cache.at(id_hash);
+    if (reader_cache.find(id_hash) != reader_cache.end()) {
+      value_cache[id_hash] = **reader_cache.at(id_hash);
+    } else {
+      throw std::runtime_error("LazyValueReader::read(): tried to read a branch that did not exist in the TTree");
+    }
   }
 
   inline T get(const unsigned int& id_hash) const {
-    return value_cache.at(id_hash);
+    if (value_cache.find(id_hash) != value_cache.end()) {
+      return value_cache.at(id_hash);
+    } else {
+      throw std::runtime_error("LazyValueReader::get(): tried to read a branch that did not exist in the TTree");
+    }
   }
 };
 
@@ -473,15 +494,16 @@ static inline TLorentzVector make_lv(float pt, float eta, float phi, float mass)
 // to the event loop if you want to compute a new  quantity - rather, you can
 // add a new Analyzer
 template <class EventClass, class ConfigurationClass>
-FileReport looper_main(const ConfigurationClass& config, const string& filename,
+FileReport looper_main(const ConfigurationClass& config,
                        TTreeReader& reader, Output& output,
-                       const vector<Analyzer*>& analyzers, long long max_events,
-                       long long reportevery) {
+                       const vector<Analyzer*>& analyzers) {
   // Make sure we clear the state of the reader
   reader.Restart();
 
   TStopwatch sw;
-  sw.Start(); 
+  sw.Start();
+
+  const auto filename = reader.GetTree()->GetCurrentFile()->GetPath();
 
   // We initialize the C++ representation of the event (data row) from the
   // TTreeReader
@@ -498,7 +520,7 @@ FileReport looper_main(const ConfigurationClass& config, const string& filename,
        << " events in TTree " << reader.GetTree() << endl;
   while (reader.Next()) {
     // In case of early termination
-    if (max_events > 0 && nevents == max_events) {
+    if (config.max_events > 0 && nevents == config.max_events) {
       cout << "breaking event loop before event " << nevents << endl;
       break;
     }
@@ -534,7 +556,7 @@ FileReport looper_main(const ConfigurationClass& config, const string& filename,
     }
 
     // Print out a progress report
-    if (nevents % reportevery == 0) {
+    if (nevents % config.report_period == 0) {
       const auto elapsed_time = sw.RealTime();
       const auto speed = nevents / elapsed_time;
       const auto remaining_events = (reader.GetEntries(true) - nevents);
@@ -558,8 +580,6 @@ FileReport looper_main(const ConfigurationClass& config, const string& filename,
   // Compute the event processing speed in kHz
   report.speed =
       (double)report.num_events_processed / report.real_time / 1000.0;
-
-  report.print(cout);
 
   cout << "looper_main"
        << " nevents=" << report.num_events_processed

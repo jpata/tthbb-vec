@@ -4,6 +4,5 @@
     ],
     "output_filename": "out.root",
     "max_events": 10000,
-    "report_period": 1000,
-    "analyzers": ["MuonEventAnalyzer", "MyTreeAnalyzer"]
+    "report_period": 1000
 }
