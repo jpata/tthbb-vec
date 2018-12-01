@@ -53,7 +53,29 @@ cd nanoflow
 source setup.sh #or setup-slc6.sh on lxplus or other SLC6 machine
 make
 ./bin/nf data/input_xrootd.json out.json
-root -l out.root
+~~~
+
+This will run the event loop and print out some metrics.
+~~~
+$ ./bin/nf data/workdir/jobs/ZZTo2e2mu/ZZTo2e2mu/job_0.json out.json
+18:28:12 nanoflow main() started
+18:28:13 loading json file data/workdir/jobs/ZZTo2e2mu/ZZTo2e2mu/job_0.json
+Creating output file ./data/workdir/jobs/ZZTo2e2mu/ZZTo2e2mu/out_0.root
+Creating output file ./data/workdir/jobs/ZZTo2e2mu/ZZTo2e2mu/out_0.root
+Creating Analyzers
+Creating MuonEventAnalyzer
+Opening input file file:///Users/joosep/Documents/caltech/nanoflow/./data/local_cache/skim_ZZTo2e2mu.root
+starting loop over 50000 events in TTree 0x7fb308298510
+Processed 0/50000 speed=0kHz ETA=infs
+Processed 10000/50000 speed=89.0416kHz ETA=0.449228s
+Processed 20000/50000 speed=131.152kHz ETA=0.228742s
+Processed 30000/50000 speed=155.894kHz ETA=0.128292s
+Processed 40000/50000 speed=169.306kHz ETA=0.0590645s
+looper_main nevents=50000,cpu_time=0.26,real_time=0.27646,speed=180.858
+FileReport eff=0.940462,NanoEvent=0.298338,MuonEventAnalyzer=0.334345,MyTreeAnalyzer=0.367317,
+All input files processed, saving output
+Writing output to file ./data/workdir/jobs/ZZTo2e2mu/ZZTo2e2mu/out_0.root:/
+18:28:14 nanoflow main() done on json file data/workdir/jobs/ZZTo2e2mu/ZZTo2e2mu/job_0.json
 ~~~
 
 ## Overview
