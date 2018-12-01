@@ -320,7 +320,7 @@ class Analysis:
 
 def event_callback(event):
     if event.domain == "GFAL2:CORE:COPY" and event.stage == "LIST:ITEM": 
-    	print("[%s] %s %s %s" % (event.timestamp, event.domain, event.stage, event.description))
+        print("[%s] %s %s %s" % (event.timestamp, event.domain, event.stage, event.description))
 
 def monitor_callback(src, dst, average, instant, transferred, elapsed):
     print("[%4d] %.2fMB (%.2fKB/s)\r" % (elapsed, transferred/1014/1024, average/1024))
@@ -424,7 +424,7 @@ class SequentialAnalysis:
         for inf in self.conf.input_files:
             tf = ROOT.TFile.Open(inf)
             reader = ROOT.TTreeReader("Events", tf)
-            report = self.looper_main(self.conf, inf, reader, self.output, self.analyzers, self.conf.max_events, self.conf.report_period)
+            report = self.looper_main(self.conf, reader, self.output, self.analyzers)
             all_reports.append(report)
 
         self.output.close()
