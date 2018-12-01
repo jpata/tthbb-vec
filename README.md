@@ -5,14 +5,14 @@ TL;DR: nanoflow is a single-header C++ library to write event loops over NanoAOD
 The final stage of LHC collider data analysis is usually in the form of ROOT files containing events formed of a variable number of simple data types (floats, ints). In CMS, this is the NanoAOD step and the structure of the data looks something like this:
 
 ~~~
-run       : run/I
-luminosityBlock : luminosityBlock/i
-event     : event/l
-nMuon     : nMuon/i
-Muon_pt   : Muon_pt[nMuon]/F
-Muon_eta  : Muon_eta[nMuon]/F
-Muon_phi  : Muon_phi[nMuon]/F
-Muon_mass : Muon_mass[nMuon]/F
+run/I
+luminosityBlock/i
+event/l
+nMuon/i
+Muon_pt[nMuon]/F
+Muon_eta[nMuon]/F
+Muon_phi[nMuon]/F
+Muon_mass[nMuon]/F
 ~~~
 
 Usually, we analyze the data in an explicit event loop. 
@@ -100,7 +100,7 @@ class MyAnalysisEvent : public NanoEvent {
 }
 ~~~
 
-That's it! To get started, either clone this repository and modify `interface/demoanalysis.h` or just download the files `interface/nanoflow.h` and `interface/json.hpp` to use in your own project.
+That's it! To get started, either clone this repository and modify `interface/demoanalysis.h` or just download the files `interface/nanoflow.h` and `interface/json.hpp` to use in your own project. 
 
 # Analyzing multiple datasets
 
