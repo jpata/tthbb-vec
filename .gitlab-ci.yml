@@ -21,7 +21,7 @@ before_script:
   - git config --global user.name 'CERN CI'
   - git config --global user.email 'joosep.pata@cern.ch'
   - git config --global user.github jpata
-  - source setup.sh
+  - source setup-centos7.sh
 
 build-looper:
     tags: [ cvmfs ]
@@ -77,4 +77,20 @@ analysis-flow:
       - cd nanoflow
       - pwd
       - ls -al
+      - python python/analysis.py --analysis data/analysis.yaml --copy_files
       - python python/analysis.py --analysis data/analysis.yaml --create_jobfiles --run_jobs
+
+analysis-flow-cms:
+    tags: [ cvmfs ]
+    stage: analysis
+    script:
+      - cd $CI_HOME
+      - mv nanoflow.tgz ../
+      - cd ..
+      - rm -Rf nanoflow
+      - tar xf nanoflow.tgz
+      - cd nanoflow
+      - pwd
+      - ls -al
+      - python python/analysis.py --analysis data/analysis_cms.yaml --cache_das --copy_files
+      - python python/analysis.py --analysis data/analysis_cms.yaml --create_jobfiles --run_jobs

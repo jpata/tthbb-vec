@@ -1,0 +1,20 @@
+datasets:
+  #The ROOT TFile prefix that allows us to access the files
+  global_file_prefix: root://cms-xrd-global.cern.ch/
+  cache_location: ./data/local_cache/
+  workdirectory: ./data/analysis_cms/workdir/
+  use_cache: true
+
+  #All the simulation datasets are gathered here
+  simulation:
+    GluGluHToMuMu:
+      - name: /GluGluHToMuMu_M-125_13TeV_powheg_pythia8/RunIIFall17NanoAOD-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/NANOAODSIM 
+        xs: 0.009605
+        max_files: 2 
+  data:
+    DoubleMu:
+      - name: /DoubleMuon/Run2017B-31Mar2018-v1/NANOAOD 
+        max_files: 2 
+      - name: /DoubleMuon/Run2017C-31Mar2018-v1/NANOAOD 
+        max_files: 2 
+

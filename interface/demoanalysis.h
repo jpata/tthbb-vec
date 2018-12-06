@@ -88,12 +88,21 @@ class MyAnalysisEvent : public NanoEvent {
   void analyze() {
     clear_event();
 
-    //In older NanoAOD, this was int instead of uint
-    //this->lc_uint.read(string_hash("run"));
-    this->lc_int.read(string_hash("run"));
-    //this->run = this->lc_uint.get(string_hash("run"));
-    this->run = this->lc_int.get(string_hash("run"));
     
+    const auto run_key = string_hash("run");
+    //In older NanoAOD, this was int instead of uint
+    //Usually you want to have the datatype fixed, but can choose dynamically as well
+    //as shown here
+    if(this->lc_int.has_key(run_key)) {
+      this->lc_int.read(string_hash("run"));
+      this->run = this->lc_int.get(string_hash("run"));
+    } else if(this->lc_uint.has_key(run_key)) {
+      this->lc_uint.read(string_hash("run"));
+      this->run = this->lc_uint.get(string_hash("run"));
+    } else {
+      throw std::runtime_error("MyAnalysisEvent::analyze(): Could not find branch 'run' either as int or uint, file is probably not NanoAOD");
+    }
+ 
     this->lc_uint.read(string_hash("luminosityBlock"));
     this->luminosityBlock = this->lc_uint.get(string_hash("luminosityBlock"));
     this->lc_ulong64.read(string_hash("event"));
@@ -153,11 +162,12 @@ class MyTreeAnalyzer : public TreeAnalyzer {
   int nMuon_match;
 
   int nMuon;
-  array<float, 10> Muon_px;
-  array<float, 10> Muon_py;
-  array<float, 10> Muon_pz;
-  array<float, 10> Muon_energy;
-  array<int, 10> Muon_matchidx;
+  const static unsigned int nMuon_MAX = 20; 
+  array<float, nMuon_MAX> Muon_px;
+  array<float, nMuon_MAX> Muon_py;
+  array<float, nMuon_MAX> Muon_pz;
+  array<float, nMuon_MAX> Muon_energy;
+  array<int, nMuon_MAX> Muon_matchidx;
 
   MyTreeAnalyzer(Output& _output) : TreeAnalyzer(_output) {
 
@@ -189,7 +199,7 @@ class MyTreeAnalyzer : public TreeAnalyzer {
     unsigned int i = 0;
     for (auto& gp : src) {
       if (i >= Muon_px.size()) {
-        cerr << "ERROR: fill_muon, Muon out of range: " << src.size() << ">=" << Muon_px.size() << " event " << event.event << " " << src.size() << endl;
+        cerr << "ERROR: fill_muon, Muon out of range: " << src.size() << ">=" << Muon_px.size() << " event " << event.event << ", dropping muons over " << Muon_px.size() << endl;
         break;
       }
       const auto lv = make_lv(gp.pt(), gp.eta(), gp.phi(), gp.mass());
