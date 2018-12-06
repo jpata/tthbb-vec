@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import ROOT
 import json
 import sys
 import nanoflow
 
 def setup_nanoflow():
+    ROOT = nanoflow.import_ROOT()
     print("setting include dir")   
     ROOT.gROOT.ProcessLine('.include interface')
     print("including nanoflow.h")   
@@ -14,6 +14,7 @@ def setup_nanoflow():
     nanoflow.load_header("demoanalysis.h")   
 
 def run_looper(input_json, output_json):
+    ROOT = nanoflow.import_ROOT()
     print("Constructing analysis")   
     an = nanoflow.SequentialAnalysis(input_json, getattr(ROOT, "looper_main_demoanalysis")) 
 

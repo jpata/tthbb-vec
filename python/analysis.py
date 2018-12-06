@@ -1,9 +1,7 @@
 import argparse, logging
 import nanoflow
-from looper import setup_nanoflow, run_looper_args
 
 def main():
-    setup_nanoflow()
     parser = argparse.ArgumentParser(description='The nanoflow analysis controller, use `nanoflow.py -h` to get more information.')
     parser.add_argument('-a','--analysis', help='The analysis yaml file, e.g. data/analysis.yaml',
         required=True, action="store",
@@ -32,7 +30,6 @@ def main():
     logging.basicConfig(level=getattr(logging, args.loglevel))
     
     analysis = nanoflow.Analysis.from_yaml(args.analysis)
-    analysis.run_looper_args = run_looper_args
     print(analysis)
         
     datasets = analysis.get_datasets()
@@ -50,7 +47,10 @@ def main():
         analysis.create_jobfiles(datasets, 1)
     
     if args.run_jobs:
-        analysis.run_jobs(datasets, 16)
+        nanoflow.import_ROOT()
+        from looper import setup_nanoflow, run_looper_args
+        analysis.run_looper_args = run_looper_args
+        analysis.run_jobs(datasets, 16, setup_nanoflow)
 
 if __name__ == "__main__":
     main()

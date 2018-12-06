@@ -1,6 +1,8 @@
 bin/*
 data/*
+tmp
 *.swp
 *.pyc
 *.root
 *.json
+*un~

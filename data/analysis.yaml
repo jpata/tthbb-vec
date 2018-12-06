@@ -1,10 +1,10 @@
 datasets:
   #The ROOT TFile prefix that allows us to access the files
-  global_file_prefix: http://hep.kbfi.ee/~joosep/cms_opendata_2012_nanoaod_nanoflow_skim/
+  global_file_prefix: https://github.com/jpata/nanoflow-webpage/raw/master/data/cms_opendata_2012_nanoaod_nanoflow_skim/
 #  global_file_prefix: root://eospublic.cern.ch
 #  global_file_prefix: root://cms-xrd-global.cern.ch/
   cache_location: ./data/local_cache/
-  workdirectory: ./data/workdir/
+  workdirectory: ./data/analysis_opendata/workdir/
   use_cache: true
 
   #All the simulation datasets are gathered here

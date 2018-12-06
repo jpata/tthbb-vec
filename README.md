@@ -39,18 +39,36 @@ In this simple example, we need to predefine the event structure by hand in case
 
 For complex events, it gets tedious to maintain this. On the other hand, in Python, you can access the branches simply using `tree.branch_name`, but this results in slow analysis code, as Python needs to carefully check the datatype of any variable before using it.
 
-The nanoflow analysis tool is an example of how to access NanoAOD data from C++ in a lazy way without having to predefine the full event structure, but still retain some flexibility of specifying the analysis flow in python.
+The nanoflow analysis tool is an example of how to access NanoAOD data from C++ in a lazy way without having to predefine the full event structure, but still retain some flexibility of specifying the analysis flow in python. In essence, we can access branches using
+~~~
+    //Actually reads the data from disk
+    event.lc_uint.read(string_hash("nMuon"));
+    event.lc_vfloat.read(string_hash("Muon_pt"));
+    event.lc_vfloat.read(string_hash("Muon_eta"));
+    event.lc_vfloat.read(string_hash("Muon_phi"));
+    event.lc_vfloat.read(string_hash("Muon_mass"));
+     
+    //accesses the data from memory
+    const auto nMuon = event.lc_uint.get(string_hash("nMuon"));
+
+    //access data one-by-one
+    for (unsigned int i=0; i < nMuon; i++) {
+      const auto pt = event.lc_vfloat.get(string_hash("Muon_pt"), i);
+    }
+    
+    const auto pt_vec = event.lc_vfloat.get_vec(string_hash("Muon_pt"));
+~~~
 
 ## Requirements
 
-You need at least GCC 6.2 and ROOT 6.14. Older versions of ROOT (6.10) have some bugs in the TTreePlayer which result in segfaults. Use the `setup.sh` script to set up the environment on lxplus or other LCG computers.
+You need at least GCC 6.2 and ROOT 6.14. Older versions of ROOT (6.10) have some bugs in the TTreePlayer which result in segfaults. Use the `setup-*.sh` script to set up the environment on lxplus or other computers with CVMFS.
 
 ## Quickstart
 
 ~~~
 git clone https://gitlab.cern.ch/jpata/nanoflow.git
 cd nanoflow
-source setup.sh #or setup-slc6.sh on lxplus or other SLC6 machine
+source setup-centos7.sh #or setup-slc6.sh on lxplus or other SLC6 machine
 make
 ./bin/nf data/input_xrootd.json out.json
 ~~~

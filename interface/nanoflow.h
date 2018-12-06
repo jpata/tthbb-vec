@@ -108,8 +108,12 @@ class LazyArrayReader {
 
       value_cache[id_hash] = ROOT::VecOps::RVec<T>(branch_val.begin(), branch_val.end());
     } else {
-      throw std::runtime_error("read(): tried to read a branch that did not exist in the TTree");
+      throw std::runtime_error("read(): tried to read a branch that did not exist in the TTree, this can happen if you tried to read e.g. event.lc_uint(\"run\") but the data type of the corresponding TBranch was something else, like 'int'.");
     }
+  }
+
+  bool has_key(const unsigned int& id_hash) {
+    return reader_cache.find(id_hash) != reader_cache.end();
   }
 
   // Gets the value stored in a specific array at a specific index
@@ -119,7 +123,7 @@ class LazyArrayReader {
     if (value_cache.find(id_hash) != value_cache.end()) {
       return value_cache.at(id_hash)[idx];
     } else {
-      throw std::runtime_error("get(): tried to read a branch that did not exist in the TTree");
+      throw std::runtime_error("get(): tried to read a branch that did not exist in the TTree, double check branch name and datatype against TTree structure");
     }
   }
 
@@ -128,7 +132,7 @@ class LazyArrayReader {
     if (value_cache.find(id_hash) != value_cache.end()) {
       return value_cache.at(id_hash);
     } else {
-      throw std::runtime_error("get_vec(): tried to read a branch that did not exist in the TTree");
+      throw std::runtime_error("get_vec(): tried to read a branch that did not exist in the TTree, double check branch name and datatype against TTree structure");
     }
   }
 };
@@ -162,6 +166,10 @@ class LazyValueReader {
     } else {
       throw std::runtime_error("LazyValueReader::read(): tried to read a branch that did not exist in the TTree");
     }
+  }
+  
+  bool has_key(const unsigned int& id_hash) {
+    return reader_cache.find(id_hash) != reader_cache.end();
   }
 
   inline T get(const unsigned int& id_hash) const {

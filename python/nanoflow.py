@@ -3,11 +3,14 @@ from __future__ import print_function
 
 #Hack to get ROOT to ignore command line arguments that we want
 #to pass to Python
-import sys
-tmpargv = sys.argv
-sys.argv = ['-b', '-n']
-import ROOT
-sys.argv[:] = tmpargv[:]
+
+def import_ROOT():
+    import sys
+    tmpargv = sys.argv
+    sys.argv = ['-b', '-n']
+    import ROOT
+    sys.argv[:] = tmpargv[:]
+    return ROOT
 
 import yaml
 import subprocess
@@ -62,6 +65,7 @@ class Dataset:
         self.use_cache = use_cache
         self.tmpdir = tmpdir
         self.files = None
+        self.max_files = None
 
     def __repr__(self):
         """
@@ -102,21 +106,21 @@ class Dataset:
         """
         return os.path.join(self.tmpdir, "jobs", self.process, self.escape_name(), "job_{0}.json".format(njob))
 
-    def cache_filenames(self):
+    def cache_das_filenames(self):
         """Summary
         
         Returns:
             TYPE: Description
         """
         LOG_MODULE_NAME.info("caching dataset {0}".format(self.name))
-        ret = subprocess.check_output('dasgoclient --query="file dataset={0}" --limit=0'.format(self.name), shell=True)
+        ret = subprocess.check_output('dasgoclient -dasmaps /tmp --query="file dataset={0}" --limit=0'.format(self.name), shell=True)
 
-        target_dir = os.path.dirname(self.cache_filename())
+        target_dir = os.path.dirname(self.get_das_cache_filename())
         if not os.path.exists(target_dir):
             os.makedirs(target_dir)
         
         nfiles = 0
-        with open(self.cache_filename(), "w") as fi:
+        with open(self.get_das_cache_filename(), "w") as fi:
             for line in ret.split("\n"):
                 if line.endswith(".root"):
                     fi.write(line + "\n")
@@ -135,6 +139,9 @@ class Dataset:
         if self.files is None:
             lines = [li.strip() for li in open(self.get_das_cache_filename(), "r").readlines()]
             self.files = lines
+            if self.max_files > 0:
+                LOG_MODULE_NAME.info("Limiting dataset {0} to {1} files from original {2}".format(self.name, self.max_files, len(self.files)))
+                self.files = self.files[:self.max_files]
         return self.files
 
     def lfn_to_pfn(self, fn):
@@ -237,32 +244,42 @@ class Analysis:
             tmpdir = data_loaded["datasets"]["workdirectory"]
 
             mc_datasets = []
-            for process_name in data_loaded["datasets"]["simulation"]:
-                for ds in data_loaded["datasets"]["simulation"][process_name]:
-                    dataset = Dataset(
-                        ds["name"],
-                        process_name,
-                        global_file_prefix,
-                        cache_location,
-                        use_cache, tmpdir
-                    )
-                    if "files" in ds.keys() and len(ds["files"]) > 0:
-                        dataset.files = ds["files"] 
-                    mc_datasets.append(dataset)
-            
+            try:
+                for process_name in data_loaded["datasets"]["simulation"]:
+                    for ds in data_loaded["datasets"]["simulation"][process_name]:
+                        dataset = Dataset(
+                            ds["name"],
+                            process_name,
+                            global_file_prefix,
+                            cache_location,
+                            use_cache, tmpdir
+                        )
+                        if "files" in ds.keys() and len(ds["files"]) > 0:
+                            dataset.files = ds["files"] 
+                        if "max_files" in ds.keys():
+                            dataset.max_files = int(ds["max_files"]) 
+                        mc_datasets.append(dataset)
+            except KeyError as e:
+               pass 
+            except TypeError as e:
+               pass 
+ 
             data_datasets = []
-            for process_name in data_loaded["datasets"]["data"]:
-                for ds in data_loaded["datasets"]["data"][process_name]:
-                    dataset = Dataset(
-                        ds["name"],
-                        process_name,
-                        global_file_prefix,
-                        cache_location,
-                        use_cache, tmpdir
-                    )
-                    if "files" in ds.keys() and len(ds["files"]) > 0:
-                        dataset.files = ds["files"] 
-                    data_datasets.append(dataset)
+            if "data" in data_loaded["datasets"].keys():
+                for process_name in data_loaded["datasets"]["data"]:
+                    for ds in data_loaded["datasets"]["data"][process_name]:
+                        dataset = Dataset(
+                            ds["name"],
+                            process_name,
+                            global_file_prefix,
+                            cache_location,
+                            use_cache, tmpdir
+                        )
+                        if "files" in ds.keys() and len(ds["files"]) > 0:
+                            dataset.files = ds["files"] 
+                        if "max_files" in ds.keys():
+                            dataset.max_files = int(ds["max_files"]) 
+                        data_datasets.append(dataset)
 
             return Analysis(mc_datasets, data_datasets)
    
@@ -277,14 +294,14 @@ class Analysis:
 
     def copy_files(self, datasets):
         for ds in datasets:
-            LOG_MODULE_NAME.info("copying files for dataset {0} from remote storage {1} to local cache {2}".format(
+            LOG_MODULE_NAME.debug("copying files for dataset {0} from remote storage {1} to local cache {2}".format(
                 ds.name, ds.global_file_prefix, ds.cache_location
             ))
             fns = ds.get_filenames()
             LOG_MODULE_NAME.debug("dataset {0} has {1} files".format(ds.name, len(fns)))
             sources = [ds.global_file_prefix + fn for fn in fns]
             destinations = [ds.cache_location + fn for fn in fns]
-            copy_files(sources, destinations, overwrite=True, validate=False)
+            copy_files(sources, destinations)
 
 
     def remove_jobfiles(self, datasets):
@@ -300,8 +317,8 @@ class Analysis:
         for ds in datasets:
             ds.create_jobfiles(perjob)
 
-    def run_jobs(self, datasets, num_procs):
-        
+    def run_jobs(self, datasets, num_procs, setup_nanoflow):
+        setup_nanoflow() 
         ijobs = 0
         args = []
         for ds in datasets:
@@ -333,52 +350,49 @@ def check_target_dir(dest):
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)
 
-def copy_files(sources, destinations, overwrite=False, validate=False):
-    # Instantiate gfal2
-    import gfal2
-    ctx = gfal2.creat_context()
+def copy_file_http(src, dst):
+    if not ((src.startswith("https://") or src.startswith("http://")) and dst.startswith("file://")):
+        raise Exception("Can only copy from http:// or https:// to local file")
+    dstpath = dst.replace("file://", "")
+    ret = subprocess.check_output('curl -Lk {0} -o {1}'.format(src, dstpath), shell=True)
 
-    # Set transfer parameters
-    params = ctx.transfer_parameters()
-    params.event_callback = event_callback
-    params.monitor_callback = monitor_callback
-    params.create_parent = True
-    params.nbstreams = 5 
-    params.overwrite = overwrite
-    params.checksum_check = validate
+def copy_file_xrdcp(src, dst):
+    if not (src.startswith("root://") and dst.startswith("file://")):
+        raise Exception("Can only copy from root:// to local file")
+    dstpath = dst.replace("file://", "")
+    ret = subprocess.check_output('xrdcp -f {0} {1}'.format(src, dstpath), shell=True)
 
-    #make sure target directories exist    
-    for dest in destinations:
-        check_target_dir(dest)
+def copy_file_local(src, dst):
+    if not (src.startswith("file://") and dst.startswith("file://")):
+        raise Exception("Can only copy from file:// to local file")
+    srcpath = src.replace("file://", "")
+    dstpath = dst.replace("file://", "")
+    shutil.copy(srcpath, dstpath)
  
-    # Copy!
-    # In this case, an exception will be thrown if the whole process fails
-    # If any transfer fail, the method will return a list of GError objects, one per file
-    # being None if that file succeeded
-    try:
-        errors = ctx.filecopy(params, sources, destinations)
-        if not errors:
-            print("Copy succeeded!")
-        else:
-            for i in range(len(errors)):
-                e = errors[i]
-                src = sources[i]
-                dst = destinations[i]
-                if e:
-                    print("%s => %s failed [%d] %s" % (src, dst, e.code, e.message))
-                else:
-                    print("%s => %s succeeded!" % (src, dst))
-    except Exception, e:
-        print("Copy failed: %s" % str(e))
-        sys.exit(1)
+def copy_files(sources, destinations):
+    for src, dst in zip(sources, destinations):
+
+        dstpath = dst.replace("file://", "")
+        dstpath = os.path.dirname(dstpath)
+        if not os.path.exists(dstpath):
+            os.makedirs(dstpath)
+ 
+        if src.startswith("http://") or src.startswith("https://"):
+            copy_file_http(src, dst)
+        elif src.startswith("file://"):
+            copy_file_local(src, dst)
+        elif src.startswith("root://"):
+            copy_file_xrdcp(src, dst)
 
 def load_header(path):
     print("loading header {0}".format(path))
+    ROOT = import_ROOT()
     ret = ROOT.gROOT.ProcessLine('#include "{0}"'.format(path))
     if ret != 0:
         raise Exception("Could not load header {0}".format(path))
 
 def load_lib(path):
+    ROOT = import_ROOT()
     ret = ROOT.gSystem.Load(path)
     if ret != 0:
         raise Exception("Could not load library {0}".format(path))
@@ -400,15 +414,14 @@ def FileReport_to_dict(p):
 class SequentialAnalysis:
 
     def __init__(self, input_json, looper_main):
+        ROOT = import_ROOT()
         self.modules = []
         
         self.conf = ROOT.nanoflow.Configuration(input_json)
         self.output = ROOT.nanoflow.Output(self.conf.output_filename)
-        print(self.conf, self.output)
 
         vector_Analyzer = getattr(ROOT, "std::vector<nanoflow::Analyzer*>")
         self.analyzers = vector_Analyzer()
-        print(self.analyzers)
         
         self.looper_main = looper_main
 
@@ -416,6 +429,7 @@ class SequentialAnalysis:
         self.modules.append(module)
 
     def run(self):
+        ROOT = import_ROOT()
         all_reports = []
 
         for module in self.modules:
