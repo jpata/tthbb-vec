@@ -147,5 +147,6 @@ That's it! To get started, either clone this repository and modify `interface/de
 Usually, your analysis consists of more than one dataset, each representing a different process. Each dataset can be made up of multiple files. We provide a lightweight python library `nanoflow.py` which allows all the datasets to be defined in a single static file `data/analysis.yaml`, and to run the nanoflow code across those files. We can run the nanoflow analysis on these files using 
 
 ~~~
-./python/analysis.py -a data/analysis.yaml --create_jobfiles --run_jobs
+./python/analysis.py -a data/analysis.yaml --copy_files --create_jobfiles --run_jobs
+./python/analysis.py -a data/analysis_cms.yaml --cache_das --copy_files --create_jobfiles --run_jobs
 ~~~
